@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/forecast5")
-async def get_forecast5(request: Request, lat: float, lon: float):
+@router.get("/api/data/forecast5")
+async def get_weather_forecast5days(request: Request, lat: float, lon: float):
     try:
-        result = await request.app.weather_app.get_forecast5day(lat, lon)
+        result = await request.app.weather_app.get_weather_forecast5days(lat, lon)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500)
@@ -19,32 +19,32 @@ async def get_forecast5(request: Request, lat: float, lon: float):
       return result
 
 
-@router.get("/interoperable/forecast5")
-async def get_interoperable_forecast5(request: Request, lat: float, lon: float):
+@router.get("/api/linkeddata/forecast5")
+async def get_weather_forecast5days_ld(request: Request, lat: float, lon: float):
     try:
-        result = await request.app.weather_app.get_interoperable_forecast5day(lat, lon)
+        result = await request.app.weather_app.get_weather_forecast5days_ld(lat, lon)
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(status_code=500)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     else:
       return result
 
 
-@router.get("/currentforecast")
-async def get_current_forecast(request: Request, lat: float, lon: float):
+@router.get("/api/data/weather")
+async def get_weather(request: Request, lat: float, lon: float):
     try:
-        result = await request.app.weather_app.get_current_forecast(lat, lon)
+        result = await request.app.weather_app.get_weather(lat, lon)
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(status_code=500)
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     else:
       return result
 
 
-@router.get("/forecast5/thi")
-async def get_current_thi(request: Request, lat: float, lon: float):
+@router.get("/api/data/thi")
+async def get_thi(request: Request, lat: float, lon: float):
     try:
-        result = await request.app.weather_app.get_thi_forecast(lat, lon)
+        result = await request.app.weather_app.get_thi(lat, lon)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=500)

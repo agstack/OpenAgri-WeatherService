@@ -31,6 +31,14 @@ async def http_get(url: str) -> dict:
         return r.json()
 
 
+## Temperature Humidity Index
+# https://www.pericoli.com/en/temperature-humidity-index-what-you-need-to-know-about-it/
+
+def calculate_thi(temperature: float, relative_humidity: float) -> float:
+    relative_humidity = relative_humidity / 100 # Convert to % percentage
+    return (0.8 * temperature) + (relative_humidity * (temperature - 14.4)) + 46.4
+
+
 def number_to_base32_string(num: float) -> str:
     '''
     Explanation:
