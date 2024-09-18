@@ -1,12 +1,11 @@
 from unittest.mock import AsyncMock
-from fastapi import FastAPI
 import pytest
-import mongomock
 from mongomock_motor import AsyncMongoMockClient
 from httpx import AsyncClient
 from beanie import init_beanie, Document
 
 from src.core.dao import Dao
+from src.external_services.openweathermap import OpenWeatherMap
 from src.main import create_app
 from src.routes import router
 import src.utils as utils
@@ -15,6 +14,14 @@ import src.utils as utils
 @pytest.fixture
 def anyio_backend():
     return 'asyncio'
+
+@pytest.fixture
+async def openweathermap_srv():
+
+    dao_mock = AsyncMock()
+    owm_srv = OpenWeatherMap()
+    owm_srv.setup_dao(dao_mock)
+    yield owm_srv
 
 
 @pytest.fixture

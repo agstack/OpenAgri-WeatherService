@@ -8,6 +8,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+# Fetches the 5-day weather forecast for a given latitude and longitude.
+# If an error occurs, a 500 HTTP exception is raised. 
+# Returns the forecast data if successful.
 @router.get("/api/data/forecast5")
 async def get_weather_forecast5days(request: Request, lat: float, lon: float):
     try:
@@ -16,9 +19,11 @@ async def get_weather_forecast5days(request: Request, lat: float, lon: float):
         logger.exception(e)
         raise HTTPException(status_code=500)
     else:
-      return result
+        return result
 
-
+# Fetches the 5-day weather forecast in JSON-LD format for a given latitude and longitude.
+# If an error occurs, a 500 HTTP exception is raised.
+# Returns the forecast data in json-ld format if successful.
 @router.get("/api/linkeddata/forecast5")
 async def get_weather_forecast5days_ld(request: Request, lat: float, lon: float):
     try:
@@ -27,9 +32,11 @@ async def get_weather_forecast5days_ld(request: Request, lat: float, lon: float)
         logger.exception(e)
         raise HTTPException(status_code=500, detail="Internal Server Error")
     else:
-      return result
+        return result
 
-
+# Fetches the current weather data for a given latitude and longitude.
+# If an error occurs, a 500 HTTP exception is raised.
+# Returns the weather data if successful.
 @router.get("/api/data/weather")
 async def get_weather(request: Request, lat: float, lon: float):
     try:
@@ -38,9 +45,11 @@ async def get_weather(request: Request, lat: float, lon: float):
         logger.exception(e)
         raise HTTPException(status_code=500, detail="Internal Server Error")
     else:
-      return result
+        return result
 
-
+# Calculates the current Temperature-Humidity Index (THI) for a given latitude and longitude.
+# If an error occurs, a 500 HTTP exception is raised.
+# Returns the THI data if successful.
 @router.get("/api/data/thi")
 async def get_thi(request: Request, lat: float, lon: float):
     try:
@@ -49,4 +58,4 @@ async def get_thi(request: Request, lat: float, lon: float):
         logger.exception(e)
         raise HTTPException(status_code=500)
     else:
-      return result
+        return result
