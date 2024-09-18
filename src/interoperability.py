@@ -1,13 +1,14 @@
-import random
-from datetime import datetime, timezone
+import logging
 from typing import List
 import uuid
 
 from src import utils
 from src.models.point import Point
 from src.models.prediction import Prediction
-from src.utils import deepcopy_dict, number_to_base32_string
+from src.utils import deepcopy_dict
 
+
+logger = logging.getLogger(__name__)
 
 class InteroperabilitySchema:
 
@@ -140,10 +141,8 @@ class InteroperabilitySchema:
                 serialized_collections[collection_key] = collection
 
             semantic_data['@id'] = str(uuid.uuid4())
-            print(list(serialized_collections.values()))
             semantic_data['collections'].extend(list(serialized_collections.values()))
 
             return semantic_data
-            print(semantic_data)
         except Exception as e:
-            print(e)
+            logger.exception(e)

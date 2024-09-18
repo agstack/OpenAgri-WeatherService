@@ -36,7 +36,8 @@ async def http_get(url: str) -> dict:
 
 def calculate_thi(temperature: float, relative_humidity: float) -> float:
     relative_humidity = relative_humidity / 100 # Convert to % percentage
-    return (0.8 * temperature) + (relative_humidity * (temperature - 14.4)) + 46.4
+    thi = (0.8 * temperature) + (relative_humidity * (temperature - 14.4)) + 46.4
+    return round(thi, 2)
 
 
 def number_to_base32_string(num: float) -> str:

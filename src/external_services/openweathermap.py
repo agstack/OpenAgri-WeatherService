@@ -86,8 +86,8 @@ class OpenWeatherMap():
                 openweathermap_json = await utils.http_get(url)
                 weather_data = await self.dao.save_weather_data_for_point(openweathermap_json, point)
         except httpx.HTTPError as httpe:
-           logger.exception(httpe)
-           raise SourceError(f"Request to {httpe.request.url} was not succesful")
+            logger.exception(httpe)
+            raise SourceError(f"Request to {httpe.request.url} was not succesful")
         except Exception as e:
            logger.exception(e)
            raise e
@@ -114,7 +114,7 @@ class OpenWeatherMap():
 
         return weather_data.data
 
-    async def parseForecast5dayResponse(self, point: Point, data: dict) -> dict:
+    async def parseForecast5dayResponse(self, point: Point, data: dict) -> list:
 
         # Extract data to a list of Predictions
         extracted_data = []

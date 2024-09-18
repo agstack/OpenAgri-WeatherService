@@ -21,7 +21,9 @@ class WeatherData(Document):
                 "spatial_entity": {
                     "id": "0b1b7964-8f89-465c-a8b2-3d50a53459e0",
                     "type": "Point",
-                    "location": [39.14367, 45.3123]
+                    "location": {
+                        "coordinates": [39.14367, 45.3123]
+                    }
                 },
                 "data": {}
             }
