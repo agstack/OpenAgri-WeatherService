@@ -10,6 +10,7 @@ from src.utils import deepcopy_dict
 
 logger = logging.getLogger(__name__)
 
+# TODO: Re-Implement this class using OCSM
 class InteroperabilitySchema:
 
     context_schema = {

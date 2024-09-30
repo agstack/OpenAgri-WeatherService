@@ -59,3 +59,16 @@ async def get_thi(request: Request, lat: float, lon: float):
         raise HTTPException(status_code=500)
     else:
         return result
+
+# Calculates the current Temperature-Humidity Index (THI) for a given latitude and longitude.
+# If an error occurs, a 500 HTTP exception is raised.
+# Returns the THI data if successful.
+@router.get("/api/linkeddata/thi")
+async def get_thi_ld(request: Request, lat: float, lon: float):
+    try:
+        result = await request.app.weather_app.get_thi_ld(lat, lon)
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=500)
+    else:
+        return result

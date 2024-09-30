@@ -23,7 +23,6 @@ class TestModels:
         assert point.title == "Point title"
         assert point.location.type == "Point"
 
-
     @pytest.mark.anyio
     async def test_point_model_invalid_point_type(self, app):
         invalid_point = {

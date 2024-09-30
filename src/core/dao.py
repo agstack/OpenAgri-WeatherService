@@ -65,6 +65,6 @@ class Dao():
 
     # Saves the given weather data for a specific point.
     # Creates and returns the WeatherData object.
-    async def save_weather_data_for_point(self, data: dict, point: Point) -> WeatherData:
-        return await WeatherData(data=data, spatial_entity=point).create()
+    async def save_weather_data_for_point(self, point: Point, **kwargs) -> WeatherData:
+        return await WeatherData(spatial_entity=point, **kwargs).create()
 

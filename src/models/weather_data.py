@@ -9,9 +9,10 @@ from src.models.point import Point
 
 class WeatherData(Document):
     id: UUID = Field(default_factory=uuid4)
+    created_at: datetime = Field(default_factory=datetime.now) # type: ignore
     spatial_entity: Point
     data: dict
-    created_at: datetime = Field(default_factory=datetime.now) # type: ignore
+    thi: float
 
     class Config:
         use_enum_values = True
@@ -25,7 +26,8 @@ class WeatherData(Document):
                         "coordinates": [39.14367, 45.3123]
                     }
                 },
-                "data": {}
+                "data": {},
+                "thi": 42.0
             }
         }
 

@@ -74,4 +74,3 @@ class TestRoutes:
 
         response = await async_client.get("/api/data/thi", params={"lat": 10.0, "lon": 20.0})
         assert response.status_code == 500
-

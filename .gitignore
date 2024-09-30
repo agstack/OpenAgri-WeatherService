@@ -20,3 +20,4 @@ mypy_report
 
 # Ignore compiled protobuf files
 *_pb2.py
+dev/
