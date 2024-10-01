@@ -35,10 +35,6 @@ class Point(Document):
     title: Optional[str] = None
     type: PointTypeEnum
     location: Optional[GeoJSON] = None
-    root_point_id: Optional[str] = None
-    parent_id: Optional[str] = None
-    children_ids: Optional[List[str]] = None
-    mc_ids: Optional[List[str]] = None
 
     class Config:
         use_enum_values = True

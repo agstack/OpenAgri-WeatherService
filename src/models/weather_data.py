@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID, uuid4
 
 from beanie import Document
@@ -12,7 +13,7 @@ class WeatherData(Document):
     created_at: datetime = Field(default_factory=datetime.now) # type: ignore
     spatial_entity: Point
     data: dict
-    thi: float
+    thi: Optional[float] = None
 
     class Config:
         use_enum_values = True

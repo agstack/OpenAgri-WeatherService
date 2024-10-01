@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from tests.fixtures import *
@@ -56,7 +57,13 @@ class TestOpenWeatherMap:
         lat, lon = (42.424242, 24.242424)
         result = await openweathermap_srv.get_weather_forecast5days(lat, lon)
         assert isinstance(result, list)
-        assert isinstance(result[0], Prediction)
+        assert result[0] == prediction.model_dump(include={
+                                'value': True,
+                                'timestamp': True,
+                                'measurement_type': True,
+                                'source': True,
+                                'spatial_entity': {'location': {'coordinates'}}
+                            })
 
     # Test if the service raises a SourceError when the HTTP request fails.
     @pytest.mark.anyio
@@ -109,9 +116,13 @@ class TestOpenWeatherMap:
         openweathermap.InteroperabilitySchema.serialize = mock
 
         lat, lon = (42.424242, 24.242424)
-        result = await openweathermap_srv.get_weather_forecast5days_ld(lat, lon)
-        assert isinstance(result, dict)
-        assert '@context' in result
+        with pytest.raises(HTTPException):
+            await openweathermap_srv.get_weather_forecast5days_ld(lat, lon)
+
+        # TODO: Implement when OCSM for weather is ready
+        # result = await openweathermap_srv.get_weather_forecast5days_ld(lat, lon)
+        # assert isinstance(result, dict)
+        # assert '@context' in result
 
     # Test exception handling for get_weather_forecast5days_ld.
     @pytest.mark.anyio
@@ -134,14 +145,15 @@ class TestOpenWeatherMap:
         lat, lon = (42.424242, 24.242424)
         result = await openweathermap_srv.get_weather(lat, lon)
         assert isinstance(result, dict)
-        assert result['main']['temp'] == 42.0
+        assert result['data']['main']['temp'] == 42.0
 
-    # Test the THI (Temperature Humidity Index) calculation.
+    # Test the THI (Temperature Humidity Index) from cached data.
     @pytest.mark.anyio
-    async def test_get_thi(self, openweathermap_srv):
+    async def test_get_thi_from_cached_weather_data(self, openweathermap_srv):
         weather_data = WeatherData(
             data={'main': {'temp': 42.0, 'humidity': 24.42}},
-            spatial_entity=Point(type="station")
+            spatial_entity=Point(type="station"),
+            thi=86.74
         )
         openweathermap_srv.dao.find_weather_data_for_point.return_value = weather_data
 
@@ -149,4 +161,3 @@ class TestOpenWeatherMap:
         result = await openweathermap_srv.get_thi(lat, lon)
         assert isinstance(result, dict)
         assert result['thi'] == 86.74
-
