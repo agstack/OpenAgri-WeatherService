@@ -19,8 +19,7 @@ You can follow [this guide](https://docs.docker.com/engine/install/ubuntu/) to i
 After installing `docker` you can simply run
 
 ```
-docker build -t weather-srv .
-docker run -p 8000:8000 weather-srv
+docker compose up --build
 ```
 
 to run the application.
@@ -31,7 +30,92 @@ The application is served on `http://127.0.0.1:8000`
 
 **GET**
 ```
-/forecast5?lat={latitude}&lon={longitude}
+/api/data/forecast5?lat={latitude}&lon={longitude}
+```
+Example Response:
+```
+[
+  {
+    "value": 22.53,
+    "timestamp": "2024-10-01T12:00:00+00:00",
+    "source": "openweathermaps",
+    "spatial_entity": {
+      "location": {
+        "coordinates": [
+          39.1436719643054,
+          27.40518186700786
+        ]
+      }
+    },
+    "measurement_type": "ambient_temperature"
+  },
+  {
+    "value": 38,
+    "timestamp": "2024-10-01T12:00:00+00:00",
+    "source": "openweathermaps",
+    "spatial_entity": {
+      "location": {
+        "coordinates": [
+          39.1436719643054,
+          27.40518186700786
+        ]
+      }
+    },
+    "measurement_type": "ambient_humidity"
+  }]
+```
+**GET**
+```
+/api/data/thi?lat={latitude}&lon={longitude}
+```
+Example Response:
+```
+{
+  "spatial_entity": {
+    "location": {
+      "coordinates": [
+        39.1436719643054,
+        27.40518186700786
+      ]
+    }
+  },
+  "thi": 67.84
+}
+
+```
+**GET**
+```
+/api/data/weather?lat={latitude}&lon={longitude}
+```
+Example Response:
+```
+{
+  "spatial_entity": {
+    "location": {
+      "coordinates": [
+        39.1436719643054,
+        27.40518186700786
+      ]
+    }
+  },
+  "data": {
+    "weather": [
+      {
+        "description": "clear sky"
+      }
+    ],
+    "main": {
+      "temp": 23.6,
+      "pressure": 1011,
+      "humidity": 35
+    },
+    "wind": {
+      "speed": 3.78
+    },
+    "dt": 1727778917
+  }
+}
+
 ```
 
 For more info please read the [docs](http://localhost:8000/docs)
