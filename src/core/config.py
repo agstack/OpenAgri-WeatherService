@@ -12,5 +12,8 @@ DATABASE_URI = os.environ.get('DATABASE_URI', 'mongodb://root:root@localhost:270
 DATABASE_NAME = os.environ.get('DATABASE_NAME', 'openagridb')
 OPENWEATHERMAP_API_KEY = os.environ.get('OPENWEATHERMAP_API_KEY', '')
 
-ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-KEY: str = "c2bab29d257f0ffc52d9ac677d4ff6d1d9d5e92e3d3939d3f4cwc"
+# JWT
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES', ''))
+KEY = os.environ.get('JWT_KEY', '')
+ALGORITHM = os.environ.get('ALGORITHM', '')
+CRYPT_CONTEXT_SCHEME = os.environ.get('CRYPT_CONTEXT_SCHEME', '')
