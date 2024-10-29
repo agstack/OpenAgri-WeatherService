@@ -32,7 +32,7 @@ class TestRoutes:
     async def test_get_weather_forecast5days_ld_200(self, async_client):
         response = await async_client.get("/api/linkeddata/forecast5", params={"lat": 10.0, "lon": 20.0})
         assert response.status_code == 200
-        # assert isinstance(response.json(), dict)
+        assert isinstance(response.json(), dict)
 
     # Test internal server error in API call
     @pytest.mark.anyio

@@ -15,14 +15,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
 async def current_user(token: str = Depends(oauth2_scheme)) -> User: # type: ignore
     try:
         decoded_jwt_token = jwt.decode(
-            token, config.KEY, algorithms=[security.ALGORITHM]
+            token, config.KEY, algorithms=[config.ALGORITHM]
         )
     except (jwt.PyJWTError, ValidationError):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         )
-    user = await User.find(User.email == decoded_jwt_token["sub"][9:-2]).first_or_none()
+    user = await User.find(User.email == decoded_jwt_token["sub"]).first_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
