@@ -18,7 +18,7 @@ class TestOpenWeatherMap:
     # Test when cached predictions are available.
     @pytest.mark.anyio
     async def test_get_weather_forecast5days_cached_predictions(self, openweathermap_srv):
-        openweathermap_srv.dao.find_predictions_for_point.return_value = [
+        predictions = [
             Prediction(
                 value=42,
                 measurement_type="type",
@@ -28,10 +28,17 @@ class TestOpenWeatherMap:
                 spatial_entity=Point(type="station")
             )
         ]
+        openweathermap_srv.dao.find_predictions_for_point.return_value = predictions
         lat, lon = (42.424242, 24.242424)
         result = await openweathermap_srv.get_weather_forecast5days(lat, lon)
         assert isinstance(result, list)
-        assert isinstance(result[0], Prediction)
+        assert result[0] == predictions[0].model_dump(include={
+                            'value': True,
+                            'timestamp': True,
+                            'measurement_type': True,
+                            'source': True,
+                            'spatial_entity': {'location': {'coordinates'}}
+                        })
 
     # Test when no cached predictions are found.
     @pytest.mark.anyio
@@ -110,19 +117,14 @@ class TestOpenWeatherMap:
         mock = MagicMock(
             return_value={
                 '@context': {},
-                '@id': '',
-            'collections': []
         })
         openweathermap.InteroperabilitySchema.predictions_to_jsonld = mock
 
         lat, lon = (42.424242, 24.242424)
-        with pytest.raises(HTTPException):
-            await openweathermap_srv.get_weather_forecast5days_ld(lat, lon)
 
-        # TODO: Implement when OCSM for weather is ready
-        # result = await openweathermap_srv.get_weather_forecast5days_ld(lat, lon)
-        # assert isinstance(result, dict)
-        # assert '@context' in result
+        result = await openweathermap_srv.get_weather_forecast5days_ld(lat, lon)
+        assert isinstance(result, dict)
+        assert '@context' in result
 
     # Test exception handling for get_weather_forecast5days_ld.
     @pytest.mark.anyio
@@ -161,5 +163,20 @@ class TestOpenWeatherMap:
         result = await openweathermap_srv.get_thi(lat, lon)
         assert isinstance(result, dict)
         assert result['thi'] == 86.74
+
+    # Test the THI (Temperature Humidity Index) JSON-LD.
+    @pytest.mark.anyio
+    async def test_get_thi_ld(self, openweathermap_srv):
+        weather_data = WeatherData(
+            data={'main': {'temp': 42.0, 'humidity': 24.42}, 'dt': 1730201901},
+            spatial_entity=Point(type="station"),
+            thi=86.74
+        )
+        openweathermap_srv.dao.find_weather_data_for_point.return_value = weather_data
+
+        lat, lon = (42.424242, 24.242424)
+        result = await openweathermap_srv.get_thi_ld(lat, lon)
+        assert isinstance(result, dict)
+        assert result['@graph'][0]['hasMember'][0]['hasResult']['numericValue'] == 86.74
 
 
