@@ -43,93 +43,30 @@ The application is served on `http://127.0.0.1:8000`
 ```
 /api/data/forecast5?lat={latitude}&lon={longitude}
 ```
-Example Response:
+
+**GET**
 ```
-[
-  {
-    "value": 22.53,
-    "timestamp": "2024-10-01T12:00:00+00:00",
-    "source": "openweathermaps",
-    "spatial_entity": {
-      "location": {
-        "coordinates": [
-          39.1436719643054,
-          27.40518186700786
-        ]
-      }
-    },
-    "measurement_type": "ambient_temperature"
-  },
-  {
-    "value": 38,
-    "timestamp": "2024-10-01T12:00:00+00:00",
-    "source": "openweathermaps",
-    "spatial_entity": {
-      "location": {
-        "coordinates": [
-          39.1436719643054,
-          27.40518186700786
-        ]
-      }
-    },
-    "measurement_type": "ambient_humidity"
-  }]
+/api/linkeddata/forecast5?lat={latitude}&lon={longitude}
 ```
+
 **GET**
 ```
 /api/data/thi?lat={latitude}&lon={longitude}
 ```
-Example Response:
-```
-{
-  "spatial_entity": {
-    "location": {
-      "coordinates": [
-        39.1436719643054,
-        27.40518186700786
-      ]
-    }
-  },
-  "thi": 67.84
-}
 
+**GET**
 ```
+/api/linkeddata/thi?lat={latitude}&lon={longitude}
+```
+
 **GET**
 ```
 /api/data/weather?lat={latitude}&lon={longitude}
 ```
-Example Response:
-```
-{
-  "spatial_entity": {
-    "location": {
-      "coordinates": [
-        39.1436719643054,
-        27.40518186700786
-      ]
-    }
-  },
-  "data": {
-    "weather": [
-      {
-        "description": "clear sky"
-      }
-    ],
-    "main": {
-      "temp": 23.6,
-      "pressure": 1011,
-      "humidity": 35
-    },
-    "wind": {
-      "speed": 3.78
-    },
-    "dt": 1727778917
-  }
-}
 
-```
+Get a complete list of the OpenApi specification [here](API.md)
 
-For more info please run the application and read `http://localhost:8000/docs`
+For more info please run the application and read `http://digi-agri-services.greensupplychain.eu:8000/docs`
 
 ## Contribute
 

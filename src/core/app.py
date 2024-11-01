@@ -1,6 +1,7 @@
 from functools import partial
 import logging
 import fastapi
+from fastapi.openapi.utils import get_openapi
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie, Document
@@ -21,6 +22,7 @@ class Application(fastapi.FastAPI):
         self.dao = self.setup_dao()
         self.weather_app = self.setup_weather_app()
         self.setup_routes()
+        self.setup_openapi()
 
 
     def setup_dao(self):
@@ -61,3 +63,20 @@ class Application(fastapi.FastAPI):
 
         self.add_event_handler(event_type="startup", func=partial(add_dao, app=self))
         return OpenWeatherMap()
+
+    def setup_openapi(self):
+
+        async def add_openapi_schema(app: Application):
+            if app.openapi_schema:
+                return
+            openapi_schema = get_openapi(
+                title="OpenAgri Weather service",
+                version="2.5.0",
+                summary="This is OpenAPI for OpenAgri Weather service",
+                description="",
+                routes=app.routes,
+            )
+            app.openapi_schema = openapi_schema
+
+        self.add_event_handler(event_type="startup", func=partial(add_openapi_schema, app=self))
+        return
