@@ -7,7 +7,6 @@ from beanie.odm.operators.find.logical import And
 from src.core.security import verify_password
 from src.models.point import Point, GeoJSON, PointTypeEnum, GeoJSONTypeEnum
 from src.models.prediction import Prediction
-from src.models.user import User
 from src.models.weather_data import WeatherData
 
 
@@ -70,16 +69,4 @@ class Dao():
     async def save_weather_data_for_point(self, point: Point, **kwargs) -> WeatherData:
         return await WeatherData(spatial_entity=point, **kwargs).create()
 
-    # Get user by email
-    async def find_user_by_email(self, email: str) -> Optional[User]:
-        return await User.find_one(User.email == email)
-
-    # Authenticate a user
-    async def authenticate_user(self, email: str, password: str) -> Optional[User]:
-        user = await self.find_user_by_email(email=email)
-        if not user:
-            return None
-        if not verify_password(password, user.password):
-            return None
-        return user
 
