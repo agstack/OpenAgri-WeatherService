@@ -10,12 +10,6 @@ ALGORITHM = "HS256"
 pwd_context = CryptContext(schemes=["bcrypt"])
 
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
 def create_access_token(data: Union[str, Any], expire_time) -> str:
     if expire_time:
         expire = datetime.utcnow() + expire_time

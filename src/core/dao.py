@@ -1,10 +1,9 @@
 import logging
-from typing import List, Optional
+from typing import List
 from uuid import uuid4
 
 from beanie.odm.operators.find.logical import And
 
-from src.core.security import verify_password
 from src.models.point import Point, GeoJSON, PointTypeEnum, GeoJSONTypeEnum
 from src.models.prediction import Prediction
 from src.models.weather_data import WeatherData
