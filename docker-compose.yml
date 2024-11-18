@@ -3,6 +3,7 @@ version: '3'
 
 services:
   app:
+    image: ghcr.io/openagri-eu/weather-service:latest
     build: .
     depends_on:
       - mongodb

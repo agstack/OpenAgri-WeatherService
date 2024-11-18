@@ -2,6 +2,7 @@ from functools import partial
 import logging
 import fastapi
 from fastapi.openapi.utils import get_openapi
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie, Document
@@ -24,6 +25,7 @@ class Application(fastapi.FastAPI):
         self.weather_app = self.setup_weather_app()
         self.setup_routes()
         self.setup_openapi()
+        self.setup_middlewares()
 
 
     def setup_dao(self):
@@ -81,4 +83,9 @@ class Application(fastapi.FastAPI):
             app.openapi_schema = openapi_schema
 
         self.add_event_handler(event_type="startup", func=partial(add_openapi_schema, app=self))
+        return
+
+    def setup_middlewares(self):
+
+        self.add_middleware(TrustedHostMiddleware, allowed_hosts=config.EXTRA_ALLOWED_HOSTS)
         return

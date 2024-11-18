@@ -1,5 +1,7 @@
 from python:3.12 as builder
 
+LABEL org.opencontainers.image.source https://github.com/openagri-eu/weather-service
+
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN set -x && \
