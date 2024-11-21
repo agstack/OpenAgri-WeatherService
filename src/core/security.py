@@ -6,8 +6,7 @@ import jwt
 
 from src.core import config
 
-ALGORITHM = "HS256"
-pwd_context = CryptContext(schemes=["bcrypt"])
+pwd_context = CryptContext(schemes=[config.CRYPT_CONTEXT_SCHEME])
 
 
 def create_access_token(data: Union[str, Any], expire_time) -> str:
@@ -18,5 +17,5 @@ def create_access_token(data: Union[str, Any], expire_time) -> str:
             minutes=int(60 * 24 * 8)
         )
     to_encode = {"exp": expire, "sub": str(data)}
-    encoded_jwt = jwt.encode(payload=to_encode, key=config.KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(payload=to_encode, key=config.KEY, algorithm=config.ALGORITHM)
     return encoded_jwt
