@@ -15,6 +15,11 @@ OPENWEATHERMAP_API_KEY = os.environ.get('OPENWEATHERMAP_API_KEY', '')
 # ALLOWED_HOSTS
 EXTRA_ALLOWED_HOSTS = os.environ.get('EXTRA_ALLOWED_HOSTS', "*").replace(' ', '').split(',')
 
+# GATEKEEPER
+GATEKEEPER_URL= os.environ.get('GATEKEEPER_URL', '')
+GATEKEEPER_USERNAME = os.environ.get('GATEKEEPER_USERNAME', '')
+GATEKEEPER_PASSWORD = os.environ.get('GATEKEEPER_PASSWORD', '')
+
 # JWT
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get('ACCESS_TOKEN_EXPIRE_MINUTES', ''))
 KEY = os.environ.get('JWT_KEY', '')
