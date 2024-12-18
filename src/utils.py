@@ -7,9 +7,10 @@ import logging
 import os
 import struct
 import copy
+from typing import List
 import uuid
 
-from fastapi import FastAPI
+from fastapi import APIRouter
 import httpx
 
 
@@ -29,11 +30,12 @@ def extract_value_from_dict_path(d: dict, path: list):
 
 
 # List application routes
-def list_app_routes(app: FastAPI):
+def list_routes_from_routers(routers: list[APIRouter]):
     routes = []
-    for route in app.routes:
-        if hasattr(route, "methods") and "GET" in route.methods:  # Filter for relevant methods
-            routes.append({"path": route.path, "methods": list(route.methods)})
+    for router in routers:
+        for route in router.routes:
+            if hasattr(route, "methods"):
+                routes.append({"path": route.path, "methods": list(route.methods)})
     return routes
 
 

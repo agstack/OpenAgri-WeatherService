@@ -65,7 +65,7 @@ class Application(fastapi.FastAPI):
             service_directory = await gk_utils.gk_service_directory(token)
             logging.debug(f"Fetched service directory: {service_directory}")
 
-            app_routes = gk_utils.list_app_routes(app)
+            app_routes = utils.list_routes_from_routers([api_router])
             logging.debug(f"App routes: {app_routes}")
 
             existing_endpoints = {entry["endpoint"]: entry for entry in service_directory}
@@ -73,7 +73,7 @@ class Application(fastapi.FastAPI):
                 relative_path = route["path"].lstrip("/")
                 if relative_path not in existing_endpoints:
                     service_data = {
-                        "base_url": f"http://localhost:8003",
+                        "base_url": f"{config.WEATHER_SRV_HOSTNAME}:{config.WEATHER_SRV_PORT}",
                         "service_name": "weather_data",
                         "endpoint": relative_path,
                         "methods": route["methods"],
@@ -84,8 +84,7 @@ class Application(fastapi.FastAPI):
 
 
         self.add_event_handler(event_type="startup", func=partial(add_router, app=self))
-        # if config.GATEKEEPER_URL:
-        if True:
+        if config.GATEKEEPER_URL:
             self.add_event_handler(event_type="startup", func=partial(register_routes, app=self))
         return
 
