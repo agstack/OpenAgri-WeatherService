@@ -7,14 +7,23 @@ from src.core import config
 # Login to gatekeeper using credentials from config file
 async def gk_login() -> str:
     login_credentials = {
-        'username': config.GATEKEEPER_USERNAME,
-        'password': config.GATEKEEPER_PASSWORD
+        'username': config.WEATHER_SRV_GATEKEEPER_USER,
+        'password': config.WEATHER_SRV_GATEKEEPER_PASSWORD
     }
     async with httpx.AsyncClient() as client:
         url = f'{config.GATEKEEPER_URL}:{config.GATEKEEPER_APP_PORT}/api/login/'
         r = await client.post(url, data=login_credentials)
         r.raise_for_status()
-        return r.json()['access']
+        return (r.json()['access'], r.json()['refresh'])
+
+
+# Logout to gatekeeper using credentials from config file
+async def gk_logout(refresh_token):
+    async with httpx.AsyncClient() as client:
+        url = f'{config.GATEKEEPER_URL}:{config.GATEKEEPER_APP_PORT}/api/logout/'
+        r = await client.post(url, json={"refresh": refresh_token})
+        r.raise_for_status()
+        return
 
 
 # List registered endpoints in gatekeeper

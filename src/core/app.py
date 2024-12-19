@@ -59,7 +59,7 @@ class Application(fastapi.FastAPI):
         async def register_routes(app: Application):
             logger.debug("Registering routes to Gatekeeper")
 
-            token = await gk_utils.gk_login()
+            token, refresh = await gk_utils.gk_login()
             logging.debug(f"Obtained JWT token from gatekeeper: {token}")
 
             service_directory = await gk_utils.gk_service_directory(token)
@@ -81,6 +81,8 @@ class Application(fastapi.FastAPI):
                     }
                     response = await gk_utils.gk_service_register(token, service_data)
                     logging.info(f"Registered new service: {response}")
+
+            await gk_utils.gk_logout(refresh)
 
 
         self.add_event_handler(event_type="startup", func=partial(add_router, app=self))
