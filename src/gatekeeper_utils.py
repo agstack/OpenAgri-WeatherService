@@ -11,7 +11,7 @@ async def gk_login() -> str:
         'password': config.WEATHER_SRV_GATEKEEPER_PASSWORD
     }
     async with httpx.AsyncClient() as client:
-        url = f'{config.GATEKEEPER_URL}:{config.GATEKEEPER_APP_PORT}/api/login/'
+        url = f'{config.GATEKEEPER_URL}/api/login/'
         r = await client.post(url, data=login_credentials)
         r.raise_for_status()
         return (r.json()['access'], r.json()['refresh'])
@@ -20,7 +20,7 @@ async def gk_login() -> str:
 # Logout to gatekeeper using credentials from config file
 async def gk_logout(refresh_token):
     async with httpx.AsyncClient() as client:
-        url = f'{config.GATEKEEPER_URL}:{config.GATEKEEPER_APP_PORT}/api/logout/'
+        url = f'{config.GATEKEEPER_URL}/api/logout/'
         r = await client.post(url, json={"refresh": refresh_token})
         r.raise_for_status()
         return
@@ -32,7 +32,7 @@ async def gk_service_directory(token: str) -> dict:
         headers = {
             "Authorization": f"Bearer {token}"
         }
-        r = await client.get(f'{config.GATEKEEPER_URL}:{config.GATEKEEPER_APP_PORT}/api/service_directory/', headers=headers)
+        r = await client.get(f'{config.GATEKEEPER_URL}/api/service_directory/', headers=headers)
         r.raise_for_status()
         return r.json()
 
@@ -43,6 +43,6 @@ async def gk_service_register(token: str, service_data: dict) -> dict:
         headers = {
             "Authorization": f"Bearer {token}"
         }
-        r = await client.post(f'{config.GATEKEEPER_URL}:{config.GATEKEEPER_APP_PORT}/api/register_service/', headers=headers, json=service_data)
+        r = await client.post(f'{config.GATEKEEPER_URL}/api/register_service/', headers=headers, json=service_data)
         r.raise_for_status()
         return r.json()

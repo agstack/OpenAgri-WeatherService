@@ -73,7 +73,7 @@ class Application(fastapi.FastAPI):
                 relative_path = route["path"].lstrip("/")
                 if relative_path not in existing_endpoints:
                     service_data = {
-                        "base_url": f"{config.WEATHER_SRV_HOSTNAME}:{config.WEATHER_SRV_PORT}",
+                        "base_url": f"http://{config.WEATHER_SRV_HOSTNAME}:{config.WEATHER_SRV_PORT}/",
                         "service_name": "weather_data",
                         "endpoint": relative_path,
                         "methods": route["methods"],
