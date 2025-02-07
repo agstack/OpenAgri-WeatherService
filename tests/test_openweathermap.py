@@ -2,7 +2,8 @@ from fastapi import HTTPException
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from tests.fixtures import *
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 from httpx import HTTPError
 
@@ -58,7 +59,7 @@ class TestOpenWeatherMap:
         mock_get = AsyncMock(return_value={})
         openweathermap.utils.http_get = mock_get
 
-        mock_parseForecast5dayResponse = AsyncMock(return_value=[prediction])  # Mock the response parsing
+        mock_parseForecast5dayResponse = AsyncMock(return_value=[prediction])
         openweathermap_srv.parseForecast5dayResponse = mock_parseForecast5dayResponse
 
         lat, lon = (42.424242, 24.242424)
@@ -71,6 +72,73 @@ class TestOpenWeatherMap:
                                 'source': True,
                                 'spatial_entity': {'location': {'coordinates'}}
                             })
+
+
+    # Test when cached predictions are available and created within the last 3 hours (Should Pass)
+    @pytest.mark.anyio
+    async def test_get_weather_forecast5days_recent_predictions(self, openweathermap_srv):
+        recent_prediction = Prediction(
+            value=42,
+            measurement_type="type",
+            timestamp=datetime.now(),
+            created_at=datetime.now() - timedelta(hours=2, minutes=30),  # Within 3 hours
+            data_type='weather',
+            source='openweathermaps',
+            spatial_entity=Point(type="station")
+        )
+
+        openweathermap_srv.dao.find_predictions_for_point.return_value = [recent_prediction]
+        lat, lon = (42.424242, 24.242424)
+
+        result = await openweathermap_srv.get_weather_forecast5days(lat, lon)
+
+        assert isinstance(result, list)
+        assert len(result) > 0  # Ensure a prediction is returned
+        assert result[0] == recent_prediction.model_dump(include={
+            'value': True,
+            'timestamp': True,
+            'measurement_type': True,
+            'source': True,
+            'spatial_entity': {'location': {'coordinates'}}
+        })
+
+
+    # Test when cached predictions are older than 3 hours (Should Fail)
+    @pytest.mark.anyio
+    async def test_get_weather_forecast5days_old_predictions(self, openweathermap_srv):
+        old_prediction = Prediction(
+            value=42,
+            measurement_type="type",
+            timestamp=datetime.now(),
+            created_at=datetime.now() - timedelta(hours=3, minutes=1),  # Just over 3 hours
+            data_type='weather',
+            source='openweathermaps',
+            spatial_entity=Point(type="station")
+        )
+        new_prediction = Prediction(
+            value=42,
+            measurement_type="type",
+            timestamp=datetime.now(),
+            data_type='weather',
+            source='openweathermaps',
+            spatial_entity=Point(type="station")
+        )
+
+        openweathermap_srv.dao.find_predictions_for_point.return_value = []
+        openweathermap_srv.dao.create_point.return_value = Point(type="station")
+
+        mock_get = AsyncMock(return_value={})
+        openweathermap.utils.http_get = mock_get
+
+        mock_parseForecast5dayResponse = AsyncMock(return_value=[new_prediction])
+        openweathermap_srv.parseForecast5dayResponse = mock_parseForecast5dayResponse
+
+        lat, lon = (42.424242, 24.242424)
+        result = await openweathermap_srv.get_weather_forecast5days(lat, lon)
+
+        assert isinstance(result, list)
+        assert len(result) == 1  # No predictions should be returned since it's too old
+
 
     # Test if the service raises a SourceError when the HTTP request fails.
     @pytest.mark.anyio
@@ -163,6 +231,51 @@ class TestOpenWeatherMap:
         result = await openweathermap_srv.get_thi(lat, lon)
         assert isinstance(result, dict)
         assert result['thi'] == 86.74
+
+    # Test that weather data is considered recent if created within the last 3 hours.
+    @pytest.mark.anyio
+    async def test_get_weather_recent_data(self, openweathermap_srv):
+        weather_data = WeatherData(
+            data={'main': {'temp': 42.0}},
+            spatial_entity=Point(type="station"),
+            created_at=datetime.utcnow() - timedelta(hours=2, minutes=30)  # 2.5 hours ago (Valid)
+        )
+        openweathermap_srv.dao.find_weather_data_for_point.return_value = weather_data
+
+        lat, lon = (42.424242, 24.242424)
+        result = await openweathermap_srv.get_weather(lat, lon)
+
+        assert isinstance(result, dict)
+        assert result['data']['main']['temp'] == 42.0
+        assert (datetime.utcnow() - weather_data.created_at).total_seconds() <= 3 * 3600  # Within 3 hours
+
+    # Test that weather data is considered outdated if created more than 3 hours ago.
+    @pytest.mark.anyio
+    async def test_get_weather_old_data(self, openweathermap_srv):
+        weather_data = WeatherData(
+            data={'main': {'temp': 42.0}},
+            spatial_entity=Point(type="station"),
+            created_at=datetime.utcnow() - timedelta(hours=4)  # 4 hours ago (Invalid)
+        )
+        new_weather_data = WeatherData(
+            data={'main': {'temp': 43.0}},
+            spatial_entity=Point(type="station"),
+            created_at=datetime.utcnow()
+        )
+
+        openweathermap_srv.dao.find_weather_data_for_point.return_value = None
+        openweathermap_srv.dao.create_point.return_value = Point(type="station")
+        openweathermap_srv.dao.save_weather_data_for_point.return_value = new_weather_data
+
+        mock_get = AsyncMock(return_value={"main": {"temp": 43.0, "humidity": 0.1}})
+        openweathermap.utils.http_get = mock_get
+
+        lat, lon = (42.424242, 24.242424)
+        result = await openweathermap_srv.get_weather(lat, lon)
+
+        assert isinstance(result, dict)
+        assert result['data']['main']['temp'] == 43.0
+        assert (datetime.utcnow() - weather_data.created_at).total_seconds() > 3 * 3600  # More than 3 hours
 
     # Test the THI (Temperature Humidity Index) JSON-LD.
     @pytest.mark.anyio

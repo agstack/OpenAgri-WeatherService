@@ -1,9 +1,12 @@
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock
+import jwt
 import pytest
 from mongomock_motor import AsyncMongoMockClient
 from httpx import AsyncClient
 from beanie import init_beanie, Document
 
+from src.core import config
 from src.core.dao import Dao
 from src.external_services.openweathermap import OpenWeatherMap
 from src.main import create_app
@@ -47,6 +50,16 @@ async def app():
 
     yield _app
 
+@pytest.fixture
+def test_jwt_token():
+    """Generate a valid JWT token for testing."""
+    payload = {
+        "sub": "test_user",
+        "exp": datetime.utcnow() + timedelta(hours=1),  # Token valid for 1 hour
+        "roles": ["user"],  # Include any necessary claims
+    }
+    token = jwt.encode(payload, config.KEY, algorithm=config.ALGORITHM)
+    return token
 
 @pytest.fixture
 async def async_client(app):
