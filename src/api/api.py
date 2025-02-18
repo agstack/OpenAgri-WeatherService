@@ -127,7 +127,7 @@ async def get_thi_ld(
 
 
 # Forecasts suitable UAV flight conditions for all drones
-@api_router.get("/api/data/flight_forecast5")
+@api_router.get("/api/data/flight_forecast5", response_model=FlightForecastListResponse)
 async def get_flight_forecast_for_all_uavs(
     request: Request,
     lat: float,
