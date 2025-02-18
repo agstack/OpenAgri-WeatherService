@@ -15,7 +15,6 @@ from src.interoperability import InteroperabilitySchema
 from src.models.uav import FlyStatus, UAVModel
 from src.models.weather_data import WeatherData
 
-from src.external_services.sample_uav_response import UAV_FLIGHT_CONDITION_RESPONSE
 from src.schemas.uav import FlightForecastListResponse, FlightStatusForecastResponse
 
 
