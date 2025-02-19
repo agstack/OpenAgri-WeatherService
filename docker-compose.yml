@@ -23,7 +23,7 @@ services:
       WEATHER_SRV_DATABASE_NAME: ${WEATHER_SRV_DATABASE_NAME}
       EXTRA_ALLOWED_HOSTS: ${WEATHER_SRV_EXTRA_ALLOWED_HOSTS}
       WEATHER_SRV_OPENWEATHERMAP_API_KEY: ${WEATHER_SRV_OPENWEATHERMAP_API_KEY}
-      # If the above value is set then weather service will try to integrate with Gatekeeper
+      # If the below value is set then weather service will try to integrate with Gatekeeper
       GATEKEEPER_URL: ${INTERNAL_GK_URL}
       WEATHER_SRV_GATEKEEPER_USER: ${GATEKEEPER_SUPERUSER_USERNAME}
       WEATHER_SRV_GATEKEEPER_PASSWORD: ${GATEKEEPER_SUPERUSER_PASSWORD}
