@@ -1,5 +1,6 @@
 from functools import partial
 import logging
+import os
 import fastapi
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -106,7 +107,8 @@ class Application(fastapi.FastAPI):
 
         async def load_uavs_from_csv(app: Application):
             csv_path = '/data/drone_registrations.csv'
-            await utils.load_uavs_from_csv(csv_path)
+            if os.path.isfile(csv_path):
+                await utils.load_uavs_from_csv(csv_path)
 
         self.add_event_handler(event_type="startup", func=partial(load_uavs_from_csv, app=self))
         return OpenWeatherMap()

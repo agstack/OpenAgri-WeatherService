@@ -42,7 +42,6 @@ services:
       MONGO_INITDB_DATABASE: ${WEATHER_SRV_MONGO_INITDB_DATABASE}
     volumes:
       - mongo_data:/data/db
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
 
 volumes:
   mongo_data:
