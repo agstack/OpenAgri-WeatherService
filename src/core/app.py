@@ -1,20 +1,21 @@
 from functools import partial
 import logging
 import os
+
+
 import fastapi
 from fastapi.openapi.utils import get_openapi
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie, Document
 
 from src.core import config
 from src import utils
-from src import gatekeeper_utils as gk_utils
 from src.core.dao import Dao
 from src.api.api import api_router
 from src.api.auth import auth_router
 from src.external_services.openweathermap import OpenWeatherMap
+from src.services.gatekeeper_service import GatekeeperServiceClient
 
 
 logger = logging.getLogger(__name__)
@@ -61,10 +62,12 @@ class Application(fastapi.FastAPI):
         async def register_routes(app: Application):
             logger.debug("Registering routes to Gatekeeper")
 
-            token, refresh = await gk_utils.gk_login()
+            token, refresh = await GatekeeperServiceClient.gk_login()
+            app.state.jwt_token = token
+            gk_client = GatekeeperServiceClient(app)
             logging.debug(f"Obtained JWT token from gatekeeper: {token}")
 
-            service_directory = await gk_utils.gk_service_directory(token)
+            service_directory = await gk_client.gk_service_directory()
             logging.debug(f"Fetched service directory: {service_directory}")
 
             app_routes = utils.list_routes_from_routers([api_router])
@@ -81,10 +84,10 @@ class Application(fastapi.FastAPI):
                         "methods": route["methods"],
                         # "params": "lat{float}&lon{float}",
                     }
-                    response = await gk_utils.gk_service_register(token, service_data)
+                    response = await gk_client.gk_service_register(service_data)
                     logging.info(f"Registered new service: {response}")
 
-            await gk_utils.gk_logout(refresh)
+            await gk_client.gk_logout(refresh)
 
 
         self.add_event_handler(event_type="startup", func=partial(add_router, app=self))
