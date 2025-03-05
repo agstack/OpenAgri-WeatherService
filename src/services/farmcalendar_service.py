@@ -83,7 +83,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
             "hasResult": {
                 "@id": "urn:farmcalendar:QuantityValue:37b4cbab-1fa1-56c7-b72e-44464d52c21e",
                 "@type": "QuantityValue",
-                "unit": "",
+                "unit": "null",
                 "numericValue": str(round(weather_data.thi, 2))
             },
             "observedProperty": "temperature_humidity_index"
