@@ -4,7 +4,10 @@ import logging.config
 
 def setup_logging(level: str):
     # Disable noisy logging
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger('pymongo').setLevel(logging.WARNING)
+    logging.getLogger('httpcore').setLevel(logging.WARNING)
+
 
     logging_config = {
         'version': 1,

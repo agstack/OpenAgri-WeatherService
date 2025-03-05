@@ -90,7 +90,6 @@ class MicroserviceClient:
     async def get(
         self, endpoint: str, params: Optional[Dict[str, Any]] = None, **kwargs
     ):
-        """Make a GET request."""
         return await self.request("GET", endpoint, params=params, **kwargs)
 
     async def post(
