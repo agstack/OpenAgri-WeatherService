@@ -1,5 +1,6 @@
 import base64
 import csv
+from datetime import datetime, timedelta, timezone
 import functools
 import glob
 from importlib import import_module
@@ -8,7 +9,6 @@ import logging
 import os
 import struct
 import copy
-from typing import List
 import uuid
 from enum import Enum
 
@@ -37,6 +37,17 @@ def extract_value_from_dict_path(d: dict, path: list):
                 path,
                 d
             )
+
+
+# Convert UNIX timestamp in string in format HH:MM:SS
+# Optionally select ISO8601 format string
+def convert_timestamp_to_string(dt_timestamp, tz_offset, iso=False):
+    tz = timezone(timedelta(seconds=tz_offset))
+    dt_object =  datetime.fromtimestamp(dt_timestamp, tz=tz)
+
+    if iso:
+        return dt_object.isoformat()
+    return dt_object.strftime("%H:%M:%S")
 
 
 # List application routes

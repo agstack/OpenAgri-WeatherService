@@ -71,7 +71,7 @@ class MicroserviceClient:
             # Convert to FastAPI HTTPException with appropriate status code
             status_code = e.response.status_code
             try:
-                detail = e.response.json().get("detail", str(e))
+                detail = e.response.json()
             except:
                 detail = str(e)
 

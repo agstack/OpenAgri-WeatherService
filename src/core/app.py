@@ -16,6 +16,8 @@ from src.api.api import api_router
 from src.api.auth import auth_router
 from src.external_services.openweathermap import OpenWeatherMap
 from src.services.gatekeeper_service import GatekeeperServiceClient
+from src.services.farmcalendar_service import FarmCalendarServiceClient
+import src.scheduler as scheduler
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,8 @@ class Application(fastapi.FastAPI):
         self.setup_routes()
         self.setup_openapi()
         self.setup_middlewares()
+        if config.PUSH_THI_TO_FARMCALENDAR:
+            self.setup_fc_jobs()
 
 
     def setup_dao(self):
@@ -136,4 +140,16 @@ class Application(fastapi.FastAPI):
     def setup_middlewares(self):
 
         self.add_middleware(TrustedHostMiddleware, allowed_hosts=config.EXTRA_ALLOWED_HOSTS)
+        return
+
+    def setup_fc_jobs(self):
+
+        async def start_scheduler(app: Application):
+            app.state.fc_client = FarmCalendarServiceClient(app)
+            await app.state.fc_client.fetch_and_cache_locations()
+            await app.state.fc_client.fetch_or_create_thi_activity_type()
+
+            scheduler.start_scheduler(app)
+
+        self.add_event_handler(event_type="startup", func=partial(start_scheduler, app=self))
         return
