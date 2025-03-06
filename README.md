@@ -35,7 +35,7 @@ docker compose up --build
 
 to run the application.
 
-The application is served on `http://127.0.0.1:8000`
+The application is served by default on `http://127.0.0.1:8000`
 
 ## Documentation
 
@@ -64,9 +64,10 @@ The application is served on `http://127.0.0.1:8000`
 /api/data/weather?lat={latitude}&lon={longitude}
 ```
 
-Get a complete list of the OpenApi specification [here](API.md)
+Get a complete list of the OpenApi specification compatible with [OCSM](OCSM.md) and [JSON](API.md)
 
-For more info please run the application and read `http://digi-agri-services.greensupplychain.eu:8000/docs`
+## Swagger Live Docs
+Use the [Online Swagger Editor](openapi.yml) to visualise the current API specification and documentation.
 
 ## Contribute
 

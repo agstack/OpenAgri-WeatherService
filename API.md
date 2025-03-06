@@ -2,9 +2,13 @@
 
 **GET**
 ```
-/api/data/forecast5?lat={latitude}&lon={longitude}
+/api/data/forecast5
 ```
-Example Response:
+**Query params**
+- lat: float
+- lon: float
+
+**Response**
 ```
 [
   {
@@ -38,97 +42,16 @@ Example Response:
     ...
   ]
 ```
-**GET**
-```
-/api/linkeddata/forecast5?lat={latitude}&lon={longitude}
-```
-Example Response:
-```
-{
-  "@context": [
-    "https://w3id.org/ocsm/main-context.jsonld",
-    {
-      "qudt": "http://qudt.org/vocab/unit/",
-      "cf": "https://vocab.nerc.ac.uk/standard_name/"
-    }
-  ],
-  "@graph": [
-    {
-      "@id": "urn:openagri:weather:forecast:2024-11-01 09:00:00+00:00",
-      "@type": [
-        "ObservationCollection",
-        "WeatherForecast"
-      ],
-      "description": "5-day weather forecast",
-      "hasFeatureOfInterest": {
-        "@id": "urn:openagri:weather:forecast:foi:59fd7deb-3cc3-47f1-a221-35dda01a9bab",
-        "@type": [
-          "FeatureOfInterest",
-          "POI"
-        ],
-        "long": 55.8888,
-        "lat": 33.88
-      },
-      "source": "openweathermaps",
-      "resultTime": "2024-11-01T09:00:00+00:00",
-      "phenomenonTime": "2024-11-01T09:00:00+00:00",
-      "hasMember": [
-        {
-          "@id": "urn:openagri:weather:forecast:winddirection:51d5e2c1-8be0-47fe-89c8-19151adf45a8",
-          "@type": "Observation",
-          "observedProperty": "cf:wind_direction",
-          "hasResult": {
-            "@id": "urn:openagri:weather:forecast:winddirection:result:51d5e2c1-8be0-47fe-89c8-19151adf45a8",
-            "@type": "Result",
-            "numericValue": 8,
-            "unit": "Degree"
-          }
-        }
-      ]
-    },
-    {
-      "@id": "urn:openagri:weather:forecast:2024-11-01 12:00:00+00:00",
-      "@type": [
-        "ObservationCollection",
-        "WeatherForecast"
-      ],
-      "description": "5-day weather forecast",
-      "hasFeatureOfInterest": {
-        "@id": "urn:openagri:weather:forecast:foi:59fd7deb-3cc3-47f1-a221-35dda01a9bab",
-        "@type": [
-          "FeatureOfInterest",
-          "POI"
-        ],
-        "long": 55.8888,
-        "lat": 33.88
-      },
-      "source": "openweathermaps",
-      "resultTime": "2024-11-01T12:00:00+00:00",
-      "phenomenonTime": "2024-11-01T12:00:00+00:00",
-      "hasMember": [
-        {
-          "@id": "urn:openagri:weather:forecast:winddirection:04fefaac-1abe-497d-a99d-86ead1ce8349",
-          "@type": "Observation",
-          "observedProperty": "cf:wind_direction",
-          "hasResult": {
-            "@id": "urn:openagri:weather:forecast:winddirection:result:04fefaac-1abe-497d-a99d-86ead1ce8349",
-            "@type": "Result",
-            "numericValue": 25,
-            "unit": "Degree"
-          }
-        }
-      ]
-    },
-    ...
-  ]
-}
-```
 
 **GET**
 ```
-/api/data/thi?lat={latitude}&lon={longitude}
+/api/data/thi
 ```
-Example Response:
+**Query params**
+- lat: float
+- lon: float
+
+**Response**
 ```
 {
   "spatial_entity": {
@@ -143,62 +66,16 @@ Example Response:
 }
 
 ```
-**GET**
-```
-/api/linkeddata/thi?lat={latitude}&lon={longitude}
-```
-Example Response:
-```
-{
-  "@context": [
-    "https://w3id.org/ocsm/main-context.jsonld",
-    {
-      "qudt": "http://qudt.org/vocab/unit/",
-      "cf": "https://vocab.nerc.ac.uk/standard_name/"
-    }
-  ],
-  "@graph": [
-    {
-      "@id": "urn:openagri:weather:data:1730449361",
-      "@type": [
-        "ObservationCollection"
-      ],
-      "description": "Temperature Humidity Index",
-      "hasFeatureOfInterest": {
-        "@id": "urn:openagri:weather:data:foi:4e8dedcc-da30-4b52-9c0c-faca069b7633",
-        "@type": [
-          "FeatureOfInterest",
-          "POI"
-        ],
-        "long": 44.7678,
-        "lat": 23.6652
-      },
-      "source": "openweathermaps",
-      "resultTime": 1730449361,
-      "phenomenonTime": 1730449361,
-      "hasMember": [
-        {
-          "@id": "urn:openagri:weather:data:thi:2e5ff81a-298b-4504-bcfc-b3899a005933",
-          "@type": "Observation",
-          "observedProperty": "cf:temperature_humidity_index",
-          "hasResult": {
-            "@id": "urn:openagri:weather:data:thi:result:2e5ff81a-298b-4504-bcfc-b3899a005933",
-            "@type": "Result",
-            "numericValue": 71.06,
-            "unit": null
-          }
-        }
-      ]
-    }
-  ]
-}
-```
 
 **GET**
 ```
-/api/data/weather?lat={latitude}&lon={longitude}
+/api/data/weather
 ```
-Example Response:
+**Query params**
+- lat: float
+- lon: float
+
+**Response**
 ```
 {
   "spatial_entity": {
@@ -225,5 +102,140 @@ Example Response:
     },
     "dt": 1730449395
   }
+}
+```
+
+**GET**
+```
+/api/data/flight_forecast5/{uavmodel}
+```
+**Input params**
+- uavmodel: string
+
+**Query params**
+- lat: float
+- lon: float
+
+**Response**
+```
+{
+  "forecasts": [
+    {
+      "timestamp": "2025-03-05T15:00:00",
+      "uavmodel": "Mavic Pro",
+      "status": "OK",
+      "weather_source": "OpenWeatherMap",
+      "location": {
+        "_id": "295b1106-32ac-445e-bb89-c93ede238b60",
+        "type": "Point",
+        "coordinates": [
+          45.4343,
+          32.343434
+        ]
+      },
+      "weather_params": {
+        "temp": 7.38,
+        "wind": 6.14,
+        "precipitation": 0
+      }
+    },
+    {
+      "timestamp": "2025-03-05T15:00:00",
+      "uavmodel": "Mavic Pro Platinum",
+      "status": "OK",
+      "weather_source": "OpenWeatherMap",
+      "location": {
+        "_id": "295b1106-32ac-445e-bb89-c93ede238b60",
+        "type": "Point",
+        "coordinates": [
+          45.4343,
+          32.343434
+        ]
+      },
+      "weather_params": {
+        "temp": 7.38,
+        "wind": 6.14,
+        "precipitation": 0
+      }
+    },
+...
+    {
+      "timestamp": "2025-03-10T12:00:00",
+      "uavmodel": "Zip",
+      "status": "OK",
+      "weather_source": "OpenWeatherMap",
+      "location": {
+        "_id": "295b1106-32ac-445e-bb89-c93ede238b60",
+        "type": "Point",
+        "coordinates": [
+          45.4343,
+          32.343434
+        ]
+      },
+      "weather_params": {
+        "temp": 7.3,
+        "wind": 3,
+        "precipitation": 0
+      }
+    }
+  ]
+}
+```
+
+**GET**
+```
+/api/data/flight_forecast5
+```
+
+**Query params**
+- lat: float
+- lon: float
+- uavmodels: list of strings (eg. Mavic Pro)
+- status_filter: string (eg. OK, NOT OK, Marginally OK)
+
+**Response**
+```
+{
+  "forecasts": [
+    {
+      "timestamp": "2025-03-05T15:00:00",
+      "uavmodel": "Mavic Pro",
+      "status": "OK",
+      "weather_source": "OpenWeatherMap",
+      "location": {
+        "_id": "295b1106-32ac-445e-bb89-c93ede238b60",
+        "type": "Point",
+        "coordinates": [
+          45.4343,
+          32.343434
+        ]
+      },
+      "weather_params": {
+        "temp": 7.38,
+        "wind": 6.14,
+        "precipitation": 0
+      }
+    },
+...
+    {
+      "timestamp": "2025-03-05T15:00:00",
+      "uavmodel": "Mavic Pro Platinum",
+      "status": "OK",
+      "weather_source": "OpenWeatherMap",
+      "location": {
+        "_id": "295b1106-32ac-445e-bb89-c93ede238b60",
+        "type": "Point",
+        "coordinates": [
+          45.4343,
+          32.343434
+        ]
+      },
+      "weather_params": {
+        "temp": 7.38,
+        "wind": 6.14,
+        "precipitation": 0
+      }
+    },
+  ]
 }
 ```
