@@ -67,7 +67,7 @@ The application is served by default on `http://127.0.0.1:8000`
 Get a complete list of the OpenApi specification compatible with [OCSM](OCSM.md) and [JSON](API.md)
 
 ## Swagger Live Docs
-Use the [Online Swagger Editor](openapi.yml) to visualise the current API specification and documentation.
+Use the [Online Swagger Editor](https://editor-next.swagger.io/?url=https://raw.githubusercontent.com/openagri-eu/weather-service/refs/heads/doc/document-api/openapi.yml) to visualise the current API specification and documentation.
 
 ## Contribute
 
