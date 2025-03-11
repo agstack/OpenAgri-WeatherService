@@ -239,6 +239,11 @@ class OpenWeatherMap():
         return FlightForecastListResponse(forecasts=results)
 
 
+    # Fetch weather forecast and calculate suitability of spray conditions for a specific locations
+    async def get_spray_forecast(self, lat: float, lon: float, ocsm=False) -> dict:
+        ...
+
+
 
     # Asynchronously fetches weather data from the OpenWeatherMap API for a given latitude and longitude.
     # Calculates the Temperature-Humidity Index (THI), and stores the weather data along with the THI in the database.
