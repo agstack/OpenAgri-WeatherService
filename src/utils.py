@@ -10,21 +10,16 @@ import os
 import struct
 import copy
 import uuid
-from enum import Enum
 
 
 from fastapi import APIRouter
 import httpx
 
-from src.models.uav import UAVModel
+from src.models.spray import SprayStatus
+from src.models.uav import FlightStatus, UAVModel
 
 
 logger = logging.getLogger(__name__)
-
-class FlightStatus(str, Enum):
-    OK = "OK"
-    NOT_OK = "NOT OK"
-    MARGINALLY_OK = "Marginally OK"
 
 
 def deepcopy_dict(d: dict) -> dict:
@@ -155,4 +150,71 @@ async def evaluate_flight_conditions(uav: UAVModel, weather: dict) -> FlightStat
         return FlightStatus.MARGINALLY_OK
     
     return FlightStatus.OK
+
+#   Evaluate spray conditions based on weather data
+#   Determines the spray condition based on weather parameters.
+#   Returns a tuple: (spray_condition, detailed_status_dict)
+#
+#   Parameters:
+#   - temp: Temperature in Celsius
+#   - wind: Wind speed in km/h
+#   - precipitation: Precipitation in mm
+#   - humidity: Relative humidity in percentage
+#   - delta_t: Temperature difference in Celsius
+#
+#   Returns:
+#   - tuple: (SprayStatus enum value, dictionary of individual parameter statuses)
+#
+def evaluate_spray_conditions(temp, wind, precipitation, humidity, delta_t):
+    status = {}
+
+    # Temperature Check
+    if temp < 18:
+        status["temperature_status"] = SprayStatus.OPTIMAL
+    elif 18 <= temp <= 25:
+        status["temperature_status"] = SprayStatus.MARGINAL
+    else:
+        status["temperature_status"] = SprayStatus.UNSUITABLE
+
+    # Wind Speed Check
+    if wind < 15:
+        status["wind_status"] = SprayStatus.OPTIMAL
+    elif 15 <= wind <= 25:
+        status["wind_status"] = SprayStatus.MARGINAL
+    else:
+        status["wind_status"] = SprayStatus.UNSUITABLE
+
+    # Precipitation Check
+    if precipitation == 0:
+        status["precipitation_status"] = SprayStatus.OPTIMAL
+    elif 0 < precipitation <= 0.1:
+        status["precipitation_status"] = SprayStatus.MARGINAL
+    else:
+        status["precipitation_status"] = SprayStatus.UNSUITABLE
+
+    # Humidity Check
+    if 60 <= humidity <= 85:
+        status["humidity_status"] = SprayStatus.OPTIMAL
+    elif 45 <= humidity < 60 or 85 < humidity <= 95:
+        status["humidity_status"] = SprayStatus.MARGINAL
+    else:
+        status["humidity_status"] = SprayStatus.UNSUITABLE
+
+    # Delta T Check
+    if 2 <= delta_t <= 8:
+        status["delta_t_status"] = SprayStatus.OPTIMAL
+    elif 0 <= delta_t < 2 or 8 < delta_t <= 10:
+        status["delta_t_status"] = SprayStatus.MARGINAL
+    else:
+        status["delta_t_status"] = SprayStatus.UNSUITABLE
+
+    # Determine overall spray condition
+    if SprayStatus.UNSUITABLE in status.values():
+        spray_condition = SprayStatus.UNSUITABLE
+    elif SprayStatus.MARGINAL in status.values():
+        spray_condition = SprayStatus.MARGINAL
+    else:
+        spray_condition = SprayStatus.OPTIMAL
+
+    return spray_condition, status
 
