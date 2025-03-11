@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, Request, HTTPException
 from src.api.deps import authenticate_request
 
 from src.schemas.prediction import PredictionOut
+from src.schemas.spray import SprayForecastResponse
 from src.schemas.uav import FlightForecastListResponse
 from src.schemas.weather_data import THIDataOut, WeatherDataOut
 
@@ -149,7 +150,7 @@ async def get_flight_forecast_for_uav(request: Request, lat: float, lon: float, 
 
 
 # Forecast suitability of spray conditions
-@api_router.get("/api/data/spray_forecast")
+@api_router.get("/api/data/spray_forecast", response_model=List[SprayForecastResponse])
 async def get_spray_forecast(request: Request, lat: float, lon: float, payload: dict = Depends(authenticate_request)):
     try:
         result = await request.app.weather_app.get_spray_forecast(lat, lon)
