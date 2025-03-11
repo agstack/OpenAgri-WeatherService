@@ -32,26 +32,31 @@ The application is served by default on `http://127.0.0.1:8000`
 ```
 /api/data/forecast5?lat={latitude}&lon={longitude}
 ```
+Retrieves a 5-day weather forecast with 3-hour intervals for a specific location. Response is in standard JSON format
 
 **GET**
 ```
 /api/linkeddata/forecast5?lat={latitude}&lon={longitude}
 ```
+Retrieves the same 5-day weather forecast with 3-hour intervals, but returns data in OCSM JSON-LD format
 
 **GET**
 ```
 /api/data/thi?lat={latitude}&lon={longitude}
 ```
+Provides the Temperature Humidity Index for a specific location in standard JSON format
 
 **GET**
 ```
 /api/linkeddata/thi?lat={latitude}&lon={longitude}
 ```
+Provides the Temperature Humidity Index for a specific location in OCSM JSON-LD format
 
 **GET**
 ```
 /api/data/weather?lat={latitude}&lon={longitude}
 ```
+Returns current weather conditions for a specific location in standard JSON format
 
 Get a complete list of the OpenApi specification compatible with [OCSM](OCSM.md) and [JSON](API.md)
 
