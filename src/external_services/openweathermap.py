@@ -263,7 +263,8 @@ class OpenWeatherMap():
             precipitation = entry.get("rain", {}).get("3h", 0.0)
 
             # Estimate Delta T: ΔT = Dry Bulb - Wet Bulb Approximation
-            delta_t = temp - ((100 - humidity) / 5.0)
+            temp_wet_bulb = utils.calculate_wet_bulb(temp, humidity)
+            delta_t = temp - temp_wet_bulb
 
             # Evaluate spray conditions
             spray_condition, status_details = utils.evaluate_spray_conditions(temp, wind, precipitation, humidity, delta_t)
@@ -278,13 +279,16 @@ class OpenWeatherMap():
 
             await spray_data.insert()  # Save to MongoDB
 
-            results.append(SprayForecastResponse(
-                timestamp=spray_data.timestamp,
-                spray_conditions=spray_data.spray_conditions,
-                weather_source=spray_data.source,
-                location=spray_data.location,
-                detailed_status=spray_data.detailed_status
-            ))
+            if not ocsm:
+                results.append(SprayForecastResponse(
+                    timestamp=spray_data.timestamp,
+                    spray_conditions=spray_data.spray_conditions,
+                    weather_source=spray_data.source,
+                    location=spray_data.location,
+                    detailed_status=spray_data.detailed_status
+                ))
+            else:
+                results.append("")
 
         return results
 

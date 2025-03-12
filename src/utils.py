@@ -1,4 +1,5 @@
 import base64
+import math
 import csv
 from datetime import datetime, timedelta, timezone
 import functools
@@ -69,7 +70,6 @@ async def http_get(url: str) -> dict:
 
 ## Temperature Humidity Index
 # https://www.pericoli.com/en/temperature-humidity-index-what-you-need-to-know-about-it/
-
 def calculate_thi(temperature: float, relative_humidity: float) -> float:
     relative_humidity = relative_humidity / 100 # Convert to % percentage
     thi = (0.8 * temperature) + (relative_humidity * (temperature - 14.4)) + 46.4
@@ -134,6 +134,30 @@ async def load_uavs_from_csv(csv_path: str):
         logger.info(f"Inserted {len(uavs)} uav records into MongoDB.")
     else:
         logger.info("No records found in the CSV file.")
+
+
+def calculate_wet_bulb(t_dry, rh_percent):
+    """
+    Calculate wet bulb temperature using Stull's empirical formula.
+    https://journals.ametsoc.org/view/journals/apme/50/11/jamc-d-11-0143.1.xml
+    
+    Parameters:
+    t_dry (float): Dry bulb temperature in Celsius
+    rh_percent (float): Relative humidity as a percentage (0-100)
+    
+    Returns:
+    float: Wet bulb temperature in Celsius
+    
+    Note: This is an approximation valid for RH between 5% and 99% and temperatures between -20°C and 50°C
+    """
+    t_wet = t_dry * math.atan(0.151977 * math.sqrt(rh_percent + 8.313659)) + \
+            math.atan(t_dry + rh_percent) - \
+            math.atan(rh_percent - 1.676331) + \
+            0.00391838 * math.pow(rh_percent, 1.5) * math.atan(0.023101 * rh_percent) - \
+            4.686035
+
+    return t_wet
+
 
 
 # Determines flight conditions based on uav specifications and weather data
