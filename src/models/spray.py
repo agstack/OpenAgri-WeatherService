@@ -10,7 +10,7 @@ from src.models.point import GeoJSON
 class SprayStatus(str, Enum):
     OPTIMAL = "optimal"
     MARGINAL = "marginal"
-    UNSUITABLE = "uinsuitable"
+    UNSUITABLE = "unsuitable"
 
 
 class SprayForecast(Document):
