@@ -60,6 +60,18 @@ def list_routes_from_routers(routers: list[APIRouter]):
 def generate_uuid(prefix, identifier=None):
     return f"urn:openagri:{prefix}:{identifier if identifier else uuid.uuid4()}"
 
+URN_BASE_NAMESPACE = 'urn:openagri'
+
+# Generate prefix for OCSM ids
+def generate_urn_prefix(*class_names):
+    urn_prefix = ':'.join([URN_BASE_NAMESPACE] + list(*class_names))
+    return urn_prefix
+
+# Generate OCSM ids
+def generate_urn(*class_names, obj_id):
+    urn_prefix = generate_urn_prefix(class_names)
+    return f'{urn_prefix}:{obj_id}'
+
 
 async def http_get(url: str) -> dict:
     async with httpx.AsyncClient() as client:

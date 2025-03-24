@@ -9,14 +9,16 @@ from beanie.operators import In
 from src.core import config
 from src import utils
 from src.core.dao import Dao
-from src.models.point import Point
+from src.models.point import GeoJSON, Point
 from src.models.prediction import Prediction
 from src.interoperability import InteroperabilitySchema
 from src.models.spray import SprayForecast
 from src.models.uav import FlyStatus, UAVModel
 from src.models.weather_data import WeatherData
 
-from src.schemas.spray import SprayForecastResponse
+from src.ocsm.base import FeatureOfInterest, JSONLDGraph
+from src.ocsm.spray import SprayForecastDetailedStatus, SprayForecastObservation, SprayForecastResult
+from src.schemas.spray import LocationResponse, SprayForecastResponse
 from src.schemas.uav import FlightForecastListResponse, FlightStatusForecastResponse
 
 
@@ -284,13 +286,65 @@ class OpenWeatherMap():
                     timestamp=spray_data.timestamp,
                     spray_conditions=spray_data.spray_conditions,
                     weather_source=spray_data.source,
-                    location=spray_data.location,
+                    location=LocationResponse(type=spray_data.location.type, coordinates=spray_data.location.coordinates),
                     detailed_status=spray_data.detailed_status
                 ))
             else:
-                results.append("")
+                results.append(SprayForecastObservation(
+                **{
+                    "@id": utils.generate_urn(SprayForecast.__name__, obj_id=spray_data.id),
+                    "description": f"Spray Forecast on {spray_data.timestamp}",
+                    "hasFeatureOfInterest": utils.generate_urn('Location', obj_id=spray_data.location.id),
+                    "weatherSource": spray_data.source,
+                    "resultTime": spray_data.timestamp,
+                    "phenomenonTime": spray_data.timestamp,
+                    "hasResult": SprayForecastResult(
+                        **{
+                            "@id": utils.generate_urn(SprayForecast.__name__, 'result', obj_id=spray_data.id),
+                            "@type": ["Result", "SprayForecastResult"],
+                            "spray_conditions": spray_data.spray_conditions,
+                        }
+                    ),
+                    "sprayForecastDetailedStatus": SprayForecastDetailedStatus(
+                        **{
+                             "@id": utils.generate_urn(SprayForecast.__name__, 'result', obj_id=spray_data.id),
+                            "@type": ["sprayForecastDetailedStatus"],
+                            "temperatureStatus": spray_data.detailed_status["temperature_status"],
+                            "windStatus": spray_data.detailed_status["wind_status"],
+                            "precipitationStatus": spray_data.detailed_status["precipitation_status"],
+                            "humidityStatus": spray_data.detailed_status["humidity_status"],
+                            "deltaTStatus": spray_data.detailed_status["delta_t_status"],
+                        }
+                    )
+                }
+            ))
 
-        return results
+        if not ocsm:
+            return results
+        else:
+            graph = [
+                        FeatureOfInterest(
+                                    **{
+                                        "@id": utils.generate_urn('Location', obj_id=spray_data.id),
+                                        "lon": spray_data.location.coordinates[1],
+                                        "lat": spray_data.location.coordinates[0]
+                                    }
+                                ).model_dump()
+                    ]
+            [graph.append(el.model_dump(exclude_none=True)) for el in results]
+            jsonld = JSONLDGraph(
+                        **{
+                            "@context": [
+                                "https://w3id.org/ocsm/main-context.jsonld",
+                                {
+                                    "qudt": "http://qudt.org/vocab/unit/",
+                                    "cf": "https://vocab.nerc.ac.uk/standard_name/"
+                                }
+                            ],
+                            "@graph": graph
+                        }
+                    )
+            return jsonld
 
 
 
