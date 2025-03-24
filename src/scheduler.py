@@ -17,23 +17,27 @@ def schedule_tasks(app: FastAPI):
         return
 
     for lat, lon in app.state.locations:
-        scheduler.add_job(
-            post_thi_task,
-            "interval",
-            hours=config.INTERVAL_THI_TO_FARMCALENDAR,
-            id=f"thi_task_{lat}_{lon}",
-            replace_existing=True,
-            args=[app, lat, lon]
-        )
-        logging.debug(f"Scheduled THI task for {lat}, {lon}")
-        scheduler.add_job(
-            post_flight_forecast,
-            "interval",
-            days=5,
-            id=f"flight_forecast_task_{lat}_{lon}",
-            replace_existing=True,
-            args=[app, lat, lon, app.state.uavmodels]
-        )
+        if config.PUSH_THI_TO_FARMCALENDAR:
+            scheduler.add_job(
+                post_thi_task,
+                "interval",
+                hours=config.INTERVAL_THI_TO_FARMCALENDAR,
+                id=f"thi_task_{lat}_{lon}",
+                replace_existing=True,
+                args=[app, lat, lon]
+            )
+            logging.debug("Scheduled THI task for %s, %s", lat, lon)
+        if config.PUSH_FLIGHT_FORECAST_TO_FARMCALENDAR:
+            scheduler.add_job(
+                post_flight_forecast,
+                "interval",
+                days=5,
+                id=f"flight_forecast_task_{lat}_{lon}",
+                replace_existing=True,
+                args=[app, lat, lon, app.state.uavmodels]
+            )
+            logging.debug("Scheduled THI task for %s, %s", lat, lon)
+
 
 # Post THI for a single location
 async def post_thi_task(app, lat, lon):

@@ -32,8 +32,7 @@ class Application(fastapi.FastAPI):
         self.setup_routes()
         self.setup_openapi()
         self.setup_middlewares()
-        if config.PUSH_THI_TO_FARMCALENDAR:
-            self.setup_fc_jobs()
+        self.setup_fc_jobs()
 
 
     def setup_dao(self):
