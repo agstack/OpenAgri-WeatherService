@@ -9,7 +9,7 @@ from beanie.operators import In, And
 from src.core import config
 from src import utils
 from src.core.dao import Dao
-from src.models.point import Point
+from src.models.point import GeoJSON, Point
 from src.models.prediction import Prediction
 from src.models.spray import SprayForecast
 from src.models.uav import FlyStatus, UAVModel
