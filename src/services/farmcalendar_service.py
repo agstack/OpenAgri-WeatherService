@@ -109,8 +109,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
             "hasResult": {
                 "@id": "urn:farmcalendar:QuantityValue:37b4cbab-1fa1-56c7-b72e-44464d52c21e",
                 "@type": "QuantityValue",
-                "unit": "null",
-                "numericValue": str(round(weather_data.thi, 2))
+                "hasValue": str(round(weather_data.thi, 2))
             },
             "observedProperty": "temperature_humidity_index"
         }
@@ -121,7 +120,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
     @backoff.on_exception(backoff.expo, (HTTPException,), max_tries=3)
     async def send_flight_forecast(self, lat, lon, uavmodels):
 
-        fly_statuses = await self.app.weather_app.ensure_forecast_for_uavs_and_location(uavmodels, lat, lon)
+        fly_statuses = await self.app.weather_app.ensure_forecast_for_uavs_and_location(lat, lon, uavmodels, return_existing=False)
 
         for fly_status in fly_statuses:
             phenomenon_time = fly_status.timestamp.isoformat()

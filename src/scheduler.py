@@ -57,6 +57,12 @@ async def refresh_locations_and_schedule(app):
     await app.state.fc_client.fetch_and_cache_locations()
     schedule_tasks(app)
 
+# Fetch machines & update scheduler every 24 hours
+async def refresh_machines_and_schedule(app):
+    await app.state.fc_client.fetch_and_cache_uavs()
+    schedule_tasks(app)
+
+
 
 def start_scheduler(app: FastAPI):
 
@@ -64,5 +70,8 @@ def start_scheduler(app: FastAPI):
 
     # Refresh locations and reschedule every 24 hours
     scheduler.add_job(refresh_locations_and_schedule, "interval", hours=24, args=[app])
+    # Refresh machines and reschedule every 24 hours
+    scheduler.add_job(refresh_machines_and_schedule, "interval", hours=24, args=[app])
+
 
     scheduler.start()

@@ -14,8 +14,7 @@ class MadeBySensorSchema(BaseModel):
 class QuantityValueSchema(BaseModel):
     id: str = Field(..., alias="@id")
     type: str = Field(default="QuantityValue", alias="@type")
-    unit: Optional[str] = "null"
-    numericValue: Optional[float] = None
+    unit: Optional[str] = None
     hasValue: Optional[str] = None  # For flight forecast, e.g., "OK"
 
 
