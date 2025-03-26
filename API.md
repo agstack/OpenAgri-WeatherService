@@ -191,7 +191,7 @@
 - lat: float
 - lon: float
 - uavmodels: Optional list of UAV models to include in the forecast (eg. Mavic Pro)
-- status_filter: Optional list of status conditions to filter results (eg. OK, NOT OK, Marginally OK)
+- status_filter: Optional list of status conditions to filter results (eg. OK, NOT OK, MARGINAL)
 
 **Response**
 ```

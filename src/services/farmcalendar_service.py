@@ -103,7 +103,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
 
         json_payload = {
             "activityType": self.thi_activity_type,
-            "title": "THI",
+            "title": f"THI: {str(round(weather_data.thi, 2))}",
             "details": f"Temperature Humidiy Index on {utils.convert_timestamp_to_string(unix_timestamp, timezone)}",
             "phenomenonTime": utils.convert_timestamp_to_string(unix_timestamp, timezone, iso=True),
             "hasResult": {
@@ -128,7 +128,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
 
             observation = ObservationSchema(
                 activityType=self.ff_activity_type,
-                title=fly_status.uav_model,
+                title=f"{fly_status.uav_model}: {fly_status.status}",
                 details=(
                     f"Fligh forecast for {fly_status.uav_model} on "
                     f"lat: {lat}, lon: {lon} at {phenomenon_time}\n\n{weather_str}"

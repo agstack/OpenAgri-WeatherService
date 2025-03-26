@@ -133,7 +133,7 @@ async def load_uavs_from_csv(csv_path: str):
 
     uavs = []
 
-    with open(csv_path, newline='', encoding='utf-8') as csvfile:
+    with open(csv_path, newline='', encoding='utf-8-sig') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             # Convert data types where needed
@@ -190,7 +190,7 @@ async def evaluate_flight_conditions(uav: UAVModel, weather: dict) -> FlightStat
     if wind > uav.max_wind_speed or rain > uav.precipitation_tolerance:
         return FlightStatus.NOT_OK
     if wind >= uav.max_wind_speed * 0.8 or rain > 0:
-        return FlightStatus.MARGINALLY_OK
+        return FlightStatus.MARGINAL
 
     # Temperature check
     if temp < uav.min_operating_temp or temp > uav.max_operating_temp:
@@ -206,13 +206,13 @@ async def evaluate_flight_conditions(uav: UAVModel, weather: dict) -> FlightStat
 
     # Marginal check on wind speed
     if wind >= uav.max_wind_speed * 0.8:
-        return FlightStatus.MARGINALLY_OK
+        return FlightStatus.MARGINAL
 
     # Additional check for high probability of rain and UAVs with 0 mm/h tolerance
     if precipitation_prob > 0.7 and uav.precipitation_tolerance == 0:
-        return FlightStatus.MARGINALLY_OK
+        return FlightStatus.MARGINAL
     if precipitation_prob > 0.7 and uav.precipitation_tolerance * 0.8 <= rain:
-        return FlightStatus.MARGINALLY_OK
+        return FlightStatus.MARGINAL
     
     return FlightStatus.OK
 

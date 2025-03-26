@@ -375,10 +375,10 @@ class TestOpenWeatherMap:
         )
 
         response = await async_client.get(
-            "/api/data/flight_forecast5?lat=52.0&lon=13.0&status_filter=Marginally OK"
+            "/api/data/flight_forecast5?lat=52.0&lon=13.0&status_filter=MARGINAL"
         )
 
         assert response.status_code == 200
         data = response.json()
         assert len(data["forecasts"]) == 1
-        assert data["forecasts"][0]["status"] == "Marginally OK"
+        assert data["forecasts"][0]["status"] == "MARGINAL"
