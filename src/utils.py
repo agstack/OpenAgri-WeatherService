@@ -133,7 +133,11 @@ async def load_uavs_from_csv(csv_path: str):
 
     uavs = []
 
-    with open(csv_path, newline='', encoding='utf-8-sig') as csvfile:
+    # NOTE: It is important CSV file is encoded in UTF-8 without BOM
+    # BOM is a series bytes in the beginning to the document which describe the encoding
+    # and endian-ness. BOM is added to CSV files created from MS Excel
+    # Use another tool or GSheets to create the CSV file
+    with open(csv_path, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             # Convert data types where needed
