@@ -37,6 +37,16 @@ def schedule_tasks(app: FastAPI):
                 args=[app, lat, lon, app.state.uavmodels]
             )
             logging.debug("Scheduled UAV forecast task for %s, %s", lat, lon)
+        if config.PUSH_SPRAY_F_TO_FARMCALENDAR:
+            scheduler.add_job(
+                post_spray_forecast,
+                "interval",
+                days=5,
+                id=f"spray_forecast_task_{lat}_{lon}",
+                replace_existing=True,
+                args=[app, lat, lon]
+            )
+            logging.debug("Scheduled spray conditions forecast task for %s, %s", lat, lon)
 
 
 # Post THI for a single location
@@ -48,8 +58,14 @@ async def post_thi_task(app, lat, lon):
 # Post flight forecast for a single location
 async def post_flight_forecast(app, lat, lon, uavmodels):
     fc_client = app.state.fc_client
-    logging.debug(f"Posting Flight Forecast for models: {uavmodels} at location: ({lat}, {lon})")
+    logging.debug(f"Posting Flight forecast for models: {uavmodels} at location: ({lat}, {lon})")
     await fc_client.send_flight_forecast(lat, lon, uavmodels)
+
+# Post spray conditions forecast for a single location
+async def post_spray_forecast(app, lat, lon):
+    fc_client = app.state.fc_client
+    logging.debug(f"Posting spray conditions forecast at location: ({lat}, {lon})")
+    await fc_client.send_spray_forecast(lat, lon)
 
 
 # Fetch locations & update scheduler every 24 hours

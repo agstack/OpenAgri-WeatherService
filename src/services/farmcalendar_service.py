@@ -1,3 +1,4 @@
+import json
 import re
 from typing import Optional, Tuple
 from uuid import uuid4
@@ -43,6 +44,13 @@ class FarmCalendarServiceClient(MicroserviceClient):
         self.ff_activity_type = await self.fetch_or_create_activity_type(
             'Flight_Forecast_Observation',
             'Activity type collecting observed values for UAV Flight Forecast'
+        )
+
+    # Create spray conditions forecast Observation Activity Type
+    async def fetch_or_create_spray_forecast_activity_type(self) -> str:
+        self.sp_activity_type = await self.fetch_or_create_activity_type(
+            'Spray_Forecast_Observation',
+            'Activity type collectins observed values for spray conditions forecast'
         )
 
     def _get_activity_type_id(self, jsonld: dict) -> Optional[str]:
@@ -124,11 +132,11 @@ class FarmCalendarServiceClient(MicroserviceClient):
 
         for fly_status in fly_statuses:
             phenomenon_time = fly_status.timestamp.isoformat()
-            weather_str = f"Weather params: {fly_status.weather_params}"
+            weather_str = f"Weather params: {json.dumps(fly_status.weather_params)}"
 
             observation = ObservationSchema(
                 activityType=self.ff_activity_type,
-                title=f"{fly_status.uav_model}: {fly_status.status}",
+                title=f"{fly_status.uav_model}: {fly_status.status.value}",
                 details=(
                     f"Fligh forecast for {fly_status.uav_model} on "
                     f"lat: {lat}, lon: {lon} at {phenomenon_time}\n\n{weather_str}"
@@ -142,6 +150,36 @@ class FarmCalendarServiceClient(MicroserviceClient):
                     }
                 ),
                 observedProperty="flight_forecast_observation"
+            )
+
+            json_payload = observation.model_dump(by_alias=True, exclude_none=True)
+            logger.debug(json_payload)
+            await self.post('/api/v1/Observations/', json=json_payload)
+
+    # Async function to post spray conditions Forecast data with JWT authentication
+    @backoff.on_exception(backoff.expo, (HTTPException,), max_tries=3)
+    async def send_spray_forecast(self, lat, lon):
+        spray_forecasts = await self.app.weather_app.ensure_spray_forecast_for_location(lat, lon, return_existing=False)
+
+        for sf in spray_forecasts:
+            phenomenon_time = sf.timestamp.isoformat()
+
+            observation = ObservationSchema(
+                activityType=self.sp_activity_type,
+                title=f"Spray: {sf.spray_conditions.value}",
+                details=(
+                    f"Spray specific conditions on location: "
+                    f"lat: {lat}, lon: {lon} at {phenomenon_time}\n\n"
+                    f"{json.dumps(sf.detailed_status, indent=2)}"
+                ),
+                phenomenonTime=phenomenon_time,
+                hasResult=QuantityValueSchema(
+                    **{
+                        "@id": f"urn:farmcalendar:QuantityValue:{uuid4()}",
+                        "hasValue": sf.spray_conditions
+                    }
+                ),
+                observedProperty="spray_forecast_observation"
             )
 
             json_payload = observation.model_dump(by_alias=True, exclude_none=True)
