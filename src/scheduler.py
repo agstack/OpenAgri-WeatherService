@@ -36,7 +36,7 @@ def schedule_tasks(app: FastAPI):
                 replace_existing=True,
                 args=[app, lat, lon, app.state.uavmodels]
             )
-            logging.debug("Scheduled THI task for %s, %s", lat, lon)
+            logging.debug("Scheduled UAV forecast task for %s, %s", lat, lon)
 
 
 # Post THI for a single location
