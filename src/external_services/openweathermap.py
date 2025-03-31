@@ -9,10 +9,10 @@ from beanie.operators import In, And
 from src.core import config
 from src import utils
 from src.core.dao import Dao
-from src.models.point import GeoJSON, Point
+from src.models.point import Point
 from src.models.prediction import Prediction
 from src.models.spray import SprayForecast
-from src.models.uav import FlyStatus, UAVModel
+from src.models.uav import FlightStatus, FlyStatus, UAVModel
 from src.models.weather_data import WeatherData
 from src.ocsm.base import FeatureOfInterest, JSONLDGraph
 from src.ocsm.spray import SprayForecastDetailedStatus, SprayForecastObservation, SprayForecastResult
@@ -73,7 +73,7 @@ class OpenWeatherMap():
             predictions = await self.parseForecast5dayResponse(point, openweathermap_json)
         except httpx.HTTPError as httpe:
             logger.exception(httpe)
-            raise SourceError(f"Request to {httpe.request.url} was not successful") # pylint: disable=no-member
+            raise SourceError(f"Request to {httpe.request.url} was not successful") from httpe
         except Exception as e:
             logger.exception(e)
             raise e
@@ -134,7 +134,12 @@ class OpenWeatherMap():
     ) -> dict:
 
         try:
-            flystatuses = await self.ensure_forecast_for_uavs_and_location(lat, lon)
+            flystatuses = await self.ensure_forecast_for_uavs_and_location(lat, lon, uav_model_names=uavmodels)
+
+            if status_filter:
+                if not all(f in [v for v in FlightStatus] for f in status_filter):
+                    raise ValueError(f"Status name must be one of {[v.value for v in FlightStatus]}")
+                flystatuses = [fs for fs in flystatuses if fs.status in status_filter]
         except httpx.HTTPError as httpe:
             logger.exception("Request to %s was not successful", httpe.request.url)
             raise HTTPException(status_code=502, detail=f"Request to {httpe.request.url} was not successful") from httpe
@@ -145,65 +150,52 @@ class OpenWeatherMap():
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e)) from e
 
-        results = []
-        for flystatus in flystatuses:
 
-            flight_data = FlightStatusForecastResponse(
-                timestamp=flystatus.timestamp.isoformat(),
-                uavmodel=flystatus.uav_model,
-                status=flystatus.status,
-                weather_source=flystatus.weather_source,
-                weather_params=flystatus.weather_params,
-                location=flystatus.location
-            )
-            results.append(flight_data)
-
-            if not ocsm:
-                results.append(FlightStatusForecastResponse(
-                    timestamp=flight_data.timestamp.isoformat(),
-                    uavmodel=flight_data.uavmodel,
-                    status=flight_data.status,
-                    weather_source=flight_data.weather_source,
-                    weather_params=flight_data.weather_params,
-                    location=flight_data.location
-                ))
-            else:
-                results.append(FlightConditionObservation(
-                                **{
-                                    "@id": utils.generate_urn(FlyStatus.__name__, obj_id=flight_data.id),
-                                    "description": "Flight conditions for a DJI Mavic Air 2 drone model on 2025-03-05T18:00:00",
-                                    "hasFeatureOfInterest": utils.generate_urn('Location', obj_id=flight_data.location.id),
-                                    "madeBySensor": utils.generate_urn(FlyStatus.__name__, 'model', obj_id=flight_data.uav_model),
-                                    "weatherSource": "openweathermaps",
-                                    "resultTime": flight_data.timestamp,
-                                    "phenomenonTime": flight_data.timestamp,
-                                    "hasResult": FlightConditionResult(
-                                        **{
-                                            "@id": utils.generate_urn(FlyStatus.__name__, 'result', obj_id=flight_data.id),
-                                            "@type": ["Result", "FlightConditionStatus"],
-                                            "status": flight_data.status,
-                                            "temperature": flight_data.weather_params["temp"],
-                                            "precipitation": flight_data.weather_params["precipitation"],
-                                            "windSpeed": flight_data.weather_params["wind"]
-                                        }
-                                    )
-                                }
-                            ))
 
         if not ocsm:
-            response = FlightForecastListResponse(forecasts=results)
+            response = FlightForecastListResponse(forecasts=[
+                FlightStatusForecastResponse(
+                    timestamp=fs.timestamp.isoformat(),
+                    uavmodel=fs.uav_model,
+                    status=fs.status,
+                    weather_source=fs.weather_source,
+                    weather_params=fs.weather_params,
+                    location=fs.location
+                ) for fs in flystatuses])
             return response
         else:
+            first = flystatuses[0]
             graph = [
                         FeatureOfInterest(
                                     **{
-                                        "@id": utils.generate_urn('Location', obj_id=flight_data.id),
-                                        "lon": flight_data.location.coordinates[1],
-                                        "lat": flight_data.location.coordinates[0]
+                                        "@id": utils.generate_urn('Location', obj_id=first.location.id),
+                                        "lon": first.location.coordinates[1],
+                                        "lat": first.location.coordinates[0]
                                     }
                                 ).model_dump()
                     ]
-            [graph.append(el.model_dump(exclude_none=True)) for el in results]
+            for fs in flystatuses:
+                graph.append(FlightConditionObservation(
+                    **{
+                                    "@id": utils.generate_urn(FlyStatus.__name__, obj_id=fs.id),
+                                    "description": f"Flight conditions for a {fs.uav_model} drone model on 2025-03-05T18:00:00",
+                                    "hasFeatureOfInterest": utils.generate_urn('Location', obj_id=fs.location.id),
+                                    "madeBySensor": utils.generate_urn(FlyStatus.__name__, 'model', obj_id=fs.uav_model),
+                                    "weatherSource": "openweathermaps",
+                                    "resultTime": fs.timestamp,
+                                    "phenomenonTime": fs.timestamp,
+                                    "hasResult": FlightConditionResult(
+                                        **{
+                                            "@id": utils.generate_urn(FlyStatus.__name__, 'result', obj_id=fs.id),
+                                            "@type": ["Result", "FlightConditionStatus"],
+                                            "status": fs.status,
+                                            "temperature": fs.weather_params["temp"],
+                                            "precipitation": fs.weather_params["precipitation"],
+                                            "windSpeed": fs.weather_params["wind"]
+                                        }
+                                    )
+                                }
+                ).model_dump(exclude_none=True))
             jsonld = JSONLDGraph(
                         **{
                             "@context": [
@@ -222,17 +214,6 @@ class OpenWeatherMap():
     async def get_flight_forecast_for_uav(self, lat: float, lon: float, uavmodel: str, ocsm=False) -> dict:
         try:
             flystatuses = await self.ensure_forecast_for_uavs_and_location(lat, lon, [uavmodel])
-            results = []
-            for flystatus in flystatuses:
-                results.append(FlightStatusForecastResponse(
-                    timestamp=flystatus.timestamp.isoformat(),
-                    uavmodel=flystatus.uav_model,
-                    status=flystatus.status,
-                    weather_source=flystatus.weather_source,
-                    weather_params=flystatus.weather_params,
-                    location=flystatus.location
-                ))
-
         except httpx.HTTPError as httpe:
             logger.exception("Request to %s was not successful", httpe.request.url)
             raise HTTPException(status_code=502, detail=f"Request to {httpe.request.url} was not successful") from httpe
@@ -244,7 +225,15 @@ class OpenWeatherMap():
             raise HTTPException(status_code=500, detail=str(e)) from e
 
         if not ocsm:
-            response = FlightForecastListResponse(forecasts=results)
+            response = FlightForecastListResponse(forecasts=[
+                FlightStatusForecastResponse(
+                    timestamp=fs.timestamp.isoformat(),
+                    uavmodel=fs.uav_model,
+                    status=fs.status,
+                    weather_source=fs.weather_source,
+                    weather_params=fs.weather_params,
+                    location=fs.location
+                ) for fs in flystatuses])
             return response
         else:
             first = flystatuses[0]
@@ -257,7 +246,28 @@ class OpenWeatherMap():
                                     }
                                 ).model_dump()
                     ]
-            [graph.append(el.model_dump(exclude_none=True)) for el in results]
+            for fs in flystatuses:
+                graph.append(FlightConditionObservation(
+                    **{
+                                    "@id": utils.generate_urn(FlyStatus.__name__, obj_id=fs.id),
+                                    "description": f"Flight conditions for a {fs.uav_model} drone model on 2025-03-05T18:00:00",
+                                    "hasFeatureOfInterest": utils.generate_urn('Location', obj_id=fs.location.id),
+                                    "madeBySensor": utils.generate_urn(FlyStatus.__name__, 'model', obj_id=fs.uav_model),
+                                    "weatherSource": "openweathermaps",
+                                    "resultTime": fs.timestamp,
+                                    "phenomenonTime": fs.timestamp,
+                                    "hasResult": FlightConditionResult(
+                                        **{
+                                            "@id": utils.generate_urn(FlyStatus.__name__, 'result', obj_id=fs.id),
+                                            "@type": ["Result", "FlightConditionStatus"],
+                                            "status": fs.status,
+                                            "temperature": fs.weather_params["temp"],
+                                            "precipitation": fs.weather_params["precipitation"],
+                                            "windSpeed": fs.weather_params["wind"]
+                                        }
+                                    )
+                                }
+                ).model_dump(exclude_none=True))
             jsonld = JSONLDGraph(
                         **{
                             "@context": [
@@ -371,7 +381,7 @@ class OpenWeatherMap():
             thi = utils.calculate_thi(temp, rh)
         except httpx.HTTPError as httpe:
             logger.exception(httpe)
-            raise SourceError(f"Request to {httpe.request} was not successful")
+            raise SourceError(f"Request to {httpe.request} was not successful") from httpe
         except Exception as e:
             logger.exception(e)
             raise e
@@ -547,7 +557,7 @@ class OpenWeatherMap():
                         ).create()
                     predictions.append(prediction)
                     extracted_data.append(extracted_element)
-        except Exception as e:
+        except Exception as e: # pylint: disable=W0718 broad-exception-caught
             logger.debug("Cannot transform to Linked Data")
             logger.error(e)
         else:
