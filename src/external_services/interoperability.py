@@ -6,6 +6,8 @@ from src import utils
 from src.models.point import Point
 from src.models.prediction import Prediction
 from src.models.weather_data import WeatherData
+from src.ocsm.base import FeatureOfInterest, JSONLDGraph
+from src.ocsm.weather_data import THIObservation, THIResult
 
 
 logger = logging.getLogger(__name__)
@@ -80,33 +82,47 @@ class InteroperabilitySchema:
     }
 
     @classmethod
-    def weather_data_to_jsonld(cls, wdata: WeatherData, point: Point) -> dict:
-        semantic_data = utils.deepcopy_dict(cls.schema)
+    def weather_data_to_jsonld(cls, wdata: WeatherData) -> dict:
 
-        collection_schema = utils.deepcopy_dict(cls.collection_schema)
-        collection_schema["@id"] = utils.generate_uuid("weather:data", f"{wdata.data["dt"]}")
-        collection_schema["description"] = "Temperature Humidity Index"
-        collection_schema["resultTime"] = wdata.data["dt"]
-        collection_schema["phenomenonTime"] = wdata.data["dt"]
-        collection_schema["hasFeatureOfInterest"]["@id"] = utils.generate_uuid("weather:data:foi", point.id)
-        collection_schema["hasFeatureOfInterest"]["@type"].append(point.type)
-        collection_schema["hasFeatureOfInterest"]["lat"] = point.location.coordinates[0]
-        collection_schema["hasFeatureOfInterest"]["long"] = point.location.coordinates[1]
-
-        item_prefix = "weather:data:thi"
-        item_schema = utils.deepcopy_dict(cls.item_schema)
-        item_schema["@id"] = utils.generate_uuid(item_prefix, wdata.id)
-        item_schema["observedProperty"] = "cf:temperature_humidity_index"
-        item_schema["hasResult"] = {
-            "@id": utils.generate_uuid(f"{item_prefix}:result", wdata.id),
-            "@type": "Result",
-            "numericValue": wdata.thi,
-            "unit": None
-        }
-
-        collection_schema["hasMember"].append(item_schema)
-        semantic_data['@graph'].append(collection_schema)
-        return semantic_data
+        graph = [
+            FeatureOfInterest(
+                        **{
+                            "@id": utils.generate_urn('Location', obj_id=wdata.spatial_entity.location.id),
+                            "lon": wdata.spatial_entity.location.coordinates[1],
+                            "lat": wdata.spatial_entity.location.coordinates[0]
+                        }
+                    ).model_dump()
+        ]
+        graph.append(THIObservation(
+            **{
+                "@id": utils.generate_uuid("weather:data:thi", wdata.id),
+                "description": "Temperature Humidity Index",
+                "hasFeatureOfInterest": utils.generate_urn('Location', obj_id=wdata.spatial_entity.location.id),
+                "weatherSource": "openweathermaps",
+                "resultTime": wdata.data["dt"],
+                "phenomenonTime": wdata.data["dt"],
+                "hasResult": THIResult(
+                    **{
+                        "@id": utils.generate_urn("weather:data:thi", 'result', obj_id=wdata.id),
+                        "@type": ["Result", "THI"],
+                        "hasValue": wdata.thi
+                    }
+                )
+            }
+        ).model_dump(exclude_none=True))
+        jsonld = JSONLDGraph(
+                    **{
+                        "@context": [
+                            "https://w3id.org/ocsm/main-context.jsonld",
+                            {
+                                "qudt": "http://qudt.org/vocab/unit/",
+                                "cf": "https://vocab.nerc.ac.uk/standard_name/"
+                            }
+                        ],
+                        "@graph": graph
+                    }
+                )
+        return jsonld
 
     @classmethod
     def predictions_to_jsonld(cls, predictions: List[Prediction], spatial_entity: Point) -> dict:
@@ -148,4 +164,3 @@ class InteroperabilitySchema:
             logger.exception(e)
         else:
             return semantic_data
-

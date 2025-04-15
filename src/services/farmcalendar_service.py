@@ -106,7 +106,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
     @backoff.on_exception(backoff.expo, (HTTPException,), max_tries=3)
     async def send_thi(self, lat, lon):
 
-        weather_data = await self.app.weather_app.get_thi(lat, lon)
+        weather_data = await self.app.weather_app.save_weather_data_thi(lat, lon)
         # Get current unix timestamp
         current_timestamp = int(time.time())
         timezone = weather_data.data['timezone']

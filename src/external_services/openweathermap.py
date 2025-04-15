@@ -17,10 +17,12 @@ from src.models.weather_data import WeatherData
 from src.ocsm.base import FeatureOfInterest, JSONLDGraph
 from src.ocsm.spray import SprayForecastDetailedStatus, SprayForecastObservation, SprayForecastResult
 from src.ocsm.uav import FlightConditionObservation, FlightConditionResult
-from src.schemas.spray import LocationResponse, SprayForecastResponse
+from src.schemas.point import GeoJSONOut
+from src.schemas.spray import SprayForecastResponse
 from src.external_services.interoperability import InteroperabilitySchema
 from src.core.exceptions import InvalidWeatherDataError, UAVModelNotFoundError
 from src.schemas.uav import FlightForecastListResponse, FlightStatusForecastResponse
+from src.schemas.weather_data import THIDataOut, WeatherDataOut
 
 
 logger = logging.getLogger(__name__)
@@ -101,29 +103,34 @@ class OpenWeatherMap():
     # Fetches and calculates the Temperature-Humidity Index (THI) for a given latitude and longitude.
     # If the weather data is not cached, it fetches it from OpenWeatherMap and saved in the DB.
     # Raises a SourceError for HTTP errors or the original exception if any other error occurs.
-    # Returns the calculated THI.
-    async def get_thi(self, lat: float, lon: float) -> float:
+    async def get_thi(self, lat: float, lon: float, ocsm=False) -> WeatherData:
         weather_data = await self.save_weather_data_thi(lat, lon)
-        return weather_data
-
-    # Fetches and calculates the Temperature-Humidity Index (THI) in Linked Data format
-    # for a given latitude and longitude.
-    # If the weather data is not cached, it fetches it from OpenWeatherMap and saved in the DB.
-    # Raises a SourceError for HTTP errors or the original exception if any other error occurs.
-    # Returns the calculated THI in linked-data (JSON-LD) format.
-    async def get_thi_ld(self, lat: float, lon: float) -> dict:
-        weather_data = await self.save_weather_data_thi(lat, lon)
-        point = await self.dao.find_point(lat, lon)
-        jsonld_data = InteroperabilitySchema.weather_data_to_jsonld(weather_data, point)
+        if not ocsm:
+            return THIDataOut(
+                id=weather_data.id,
+                spatial_entity=GeoJSONOut(
+                        type=weather_data.spatial_entity.location.type,
+                        coordinates=weather_data.spatial_entity.location.coordinates
+                    ),
+                thi=weather_data.thi)
+        # OCSM schema object
+        jsonld_data = InteroperabilitySchema.weather_data_to_jsonld(weather_data)
         return jsonld_data
 
     # Fetches the current weather data for a given latitude and longitude.
     # If the weather data is not cached, it fetches it from OpenWeatherMap and saved in the DB.
     # Raises a SourceError for HTTP errors or the original exception if any other error occurs.
     # Returns the weather data as a dictionary.
-    async def get_weather(self, lat: float, lon: float) -> dict:
+    async def get_weather(self, lat: float, lon: float) -> WeatherData:
         weather_data = await self.save_weather_data_thi(lat, lon)
-        return weather_data
+        return WeatherDataOut(
+            id=weather_data.id,
+            spatial_entity=GeoJSONOut(
+                        type=weather_data.spatial_entity.location.type,
+                        coordinates=weather_data.spatial_entity.location.coordinates
+                    ),
+            data=weather_data.data
+        )
 
     # Fetch weather forecast and calculates fligh conditions for UAV
     async def get_flight_forecast_for_all_uavs(
@@ -160,7 +167,10 @@ class OpenWeatherMap():
                     status=fs.status,
                     weather_source=fs.weather_source,
                     weather_params=fs.weather_params,
-                    location=fs.location
+                    location=GeoJSONOut(
+                        type=fs.location.type,
+                        coordinates=fs.location.coordinates
+                    ),
                 ) for fs in flystatuses])
             return response
         else:
@@ -232,7 +242,10 @@ class OpenWeatherMap():
                     status=fs.status,
                     weather_source=fs.weather_source,
                     weather_params=fs.weather_params,
-                    location=fs.location
+                    location=GeoJSONOut(
+                        type=fs.location.type,
+                        coordinates=fs.location.coordinates
+                    ),
                 ) for fs in flystatuses])
             return response
         else:
@@ -302,7 +315,7 @@ class OpenWeatherMap():
                     timestamp=sf.timestamp,
                     spray_conditions=sf.spray_conditions,
                     weather_source=sf.source,
-                    location=LocationResponse(
+                    location=GeoJSONOut(
                         type=sf.location.type,
                         coordinates=sf.location.coordinates
                     ),
