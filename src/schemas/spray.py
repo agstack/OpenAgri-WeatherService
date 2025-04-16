@@ -10,6 +10,6 @@ from src.schemas.point import GeoJSONOut
 class SprayForecastResponse(BaseModel):
     timestamp: datetime
     spray_conditions: SprayStatus
-    weather_source: str
+    source: str
     location: GeoJSONOut
     detailed_status: Dict[str, str]

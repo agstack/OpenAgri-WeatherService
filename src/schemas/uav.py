@@ -7,7 +7,7 @@ from src.schemas.point import GeoJSONOut
 
 class FlightStatusForecastResponse(BaseModel):
     timestamp: datetime
-    uavmodel: str
+    uav_model: str
     status: str
     weather_source: str
     location: GeoJSONOut

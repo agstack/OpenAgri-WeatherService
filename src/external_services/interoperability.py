@@ -82,7 +82,7 @@ class InteroperabilitySchema:
     }
 
     @classmethod
-    def weather_data_to_jsonld(cls, wdata: WeatherData) -> dict:
+    def weather_data_to_jsonld(cls, wdata: WeatherData) -> JSONLDGraph:
 
         graph = [
             FeatureOfInterest(
