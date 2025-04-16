@@ -5,8 +5,12 @@ from typing import List
 from src import utils
 from src.models.point import Point
 from src.models.prediction import Prediction
+from src.models.spray import SprayForecast
+from src.models.uav import FlyStatus
 from src.models.weather_data import WeatherData
 from src.ocsm.base import FeatureOfInterest, JSONLDGraph
+from src.ocsm.spray import SprayForecastDetailedStatus, SprayForecastObservation, SprayForecastResult
+from src.ocsm.uav import FlightConditionObservation, FlightConditionResult
 from src.ocsm.weather_data import THIObservation, THIResult
 
 
@@ -164,3 +168,107 @@ class InteroperabilitySchema:
             logger.exception(e)
         else:
             return semantic_data
+
+    @classmethod
+    def serialize_flystatus(cls, statuses: List[FlyStatus]) -> JSONLDGraph:
+        first = statuses[0]
+        graph = [
+                    FeatureOfInterest(
+                                **{
+                                    "@id": utils.generate_urn('Location', obj_id=first.location.id),
+                                    "lon": first.location.coordinates[1],
+                                    "lat": first.location.coordinates[0]
+                                }
+                            ).model_dump()
+                ]
+        for fs in statuses:
+            graph.append(FlightConditionObservation(
+                **{
+                                "@id": utils.generate_urn(FlyStatus.__name__, obj_id=fs.id),
+                                "description": f"Flight conditions for a {fs.uav_model} drone model on 2025-03-05T18:00:00",
+                                "hasFeatureOfInterest": utils.generate_urn('Location', obj_id=fs.location.id),
+                                "madeBySensor": utils.generate_urn(FlyStatus.__name__, 'model', obj_id=fs.uav_model),
+                                "weatherSource": "openweathermaps",
+                                "resultTime": fs.timestamp,
+                                "phenomenonTime": fs.timestamp,
+                                "hasResult": FlightConditionResult(
+                                    **{
+                                        "@id": utils.generate_urn(FlyStatus.__name__, 'result', obj_id=fs.id),
+                                        "@type": ["Result", "FlightConditionStatus"],
+                                        "status": fs.status,
+                                        "temperature": fs.weather_params["temp"],
+                                        "precipitation": fs.weather_params["precipitation"],
+                                        "windSpeed": fs.weather_params["wind"]
+                                    }
+                                )
+                            }
+            ).model_dump(exclude_none=True))
+        jsonld = JSONLDGraph(
+                    **{
+                        "@context": [
+                            "https://w3id.org/ocsm/main-context.jsonld",
+                            {
+                                "qudt": "http://qudt.org/vocab/unit/",
+                                "cf": "https://vocab.nerc.ac.uk/standard_name/"
+                            }
+                        ],
+                        "@graph": graph
+                    }
+        )
+        return jsonld
+
+    @classmethod
+    def serialize_spray_forecasts(cls, forecasts: List[SprayForecast]) -> JSONLDGraph:
+        first = forecasts[0]
+        graph = [
+            FeatureOfInterest(
+                **{
+                    "@id": utils.generate_urn('Location', obj_id=first.location.id),
+                    "lon": first.location.coordinates[1],
+                    "lat": first.location.coordinates[0]
+                }
+            ).model_dump()
+        ]
+
+        for sf in forecasts:
+            graph.append(SprayForecastObservation(
+                **{
+                    "@id": utils.generate_urn(SprayForecast.__name__, obj_id=sf.id),
+                    "description": f"Spray Forecast on {sf.timestamp}",
+                    "hasFeatureOfInterest": utils.generate_urn('Location', obj_id=sf.location.id),
+                    "weatherSource": sf.source,
+                    "resultTime": sf.timestamp,
+                    "phenomenonTime": sf.timestamp,
+                    "hasResult": SprayForecastResult(
+                        **{
+                            "@id": utils.generate_urn(SprayForecast.__name__, 'result', obj_id=sf.id),
+                            "@type": ["Result", "SprayForecastResult"],
+                            "spray_conditions": sf.spray_conditions,
+                        }
+                    ),
+                    "sprayForecastDetailedStatus": SprayForecastDetailedStatus(
+                        **{
+                            "@id": utils.generate_urn(SprayForecast.__name__, 'result', obj_id=sf.id),
+                            "@type": ["sprayForecastDetailedStatus"],
+                            "temperatureStatus": sf.detailed_status["temperature_status"],
+                            "windStatus": sf.detailed_status["wind_status"],
+                            "precipitationStatus": sf.detailed_status["precipitation_status"],
+                            "humidityStatus": sf.detailed_status["humidity_status"],
+                            "deltaTStatus": sf.detailed_status["delta_t_status"],
+                        }
+                    )
+                }
+            ).model_dump(exclude_none=True))
+
+        return JSONLDGraph(
+            **{
+                "@context": [
+                    "https://w3id.org/ocsm/main-context.jsonld",
+                    {
+                        "qudt": "http://qudt.org/vocab/unit/",
+                        "cf": "https://vocab.nerc.ac.uk/standard_name/"
+                    }
+                ],
+                "@graph": graph
+            }
+        )
