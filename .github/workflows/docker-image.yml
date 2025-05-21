@@ -9,8 +9,9 @@ on:
       branch:
         description: 'Branch to run the workflow on'
         required: false
-  tags:
-    - "v*.*.*"  # Runs on version tags
+  release:
+    types:
+      - created
 
 
 jobs:
