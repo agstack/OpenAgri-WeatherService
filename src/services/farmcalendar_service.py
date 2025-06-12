@@ -32,14 +32,14 @@ class FarmCalendarServiceClient(MicroserviceClient):
         max_tries=3
     )
     async def fetch_or_create_activity_type(self, activity_type: str, description: str) -> str:
-        act_jsonld = await self.get(f'/api/v1/FarmCalendarActivityTypes/?name={activity_type}')
+        act_jsonld = await self.get(f'/FarmCalendarActivityTypes/?name={activity_type}')
 
         if not self._get_activity_type_id(act_jsonld):
             json_payload = {
                 "name": activity_type,
                 "description": description,
             }
-            act_jsonld = await self.post('/api/v1/FarmCalendarActivityTypes/', json=json_payload)
+            act_jsonld = await self.post('/FarmCalendarActivityTypes/', json=json_payload)
 
         return self._get_activity_type_id(act_jsonld)
 
@@ -78,7 +78,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
         max_tries=3
     )
     async def fetch_locations(self):
-        response = await self.get('/api/v1/FarmParcels/')
+        response = await self.get('/FarmParcels/')
 
         locations = []
         for parcel in response.get("@graph", []):
@@ -116,7 +116,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
         max_tries=3
     )
     async def fetch_uavs(self):
-        response = await self.get(f'/api/v1/AgriculturalMachines/')
+        response = await self.get(f'/AgriculturalMachines/')
         uavmodels = [ uav.get("model") for uav in response.get("@graph", []) if uav.get("model", None)]
         return uavmodels
 
@@ -155,7 +155,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
         )
         json_payload = observation.model_dump(by_alias=True, exclude_none=True)
         logger.debug(json_payload)
-        await self.post('/api/v1/Observations/', json=json_payload)
+        await self.post('/Observations/', json=json_payload)
 
     # Async function to post Flight Forecast data with JWT authentication
     @backoff.on_exception(
@@ -189,7 +189,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
             )
             json_payload = observation.model_dump(by_alias=True, exclude_none=True)
             logger.debug(json_payload)
-            await self.post('/api/v1/Observations/', json=json_payload)
+            await self.post('/Observations/', json=json_payload)
 
     # Async function to post spray conditions Forecast data with JWT authentication
     @backoff.on_exception(
@@ -224,4 +224,4 @@ class FarmCalendarServiceClient(MicroserviceClient):
 
             json_payload = observation.model_dump(by_alias=True, exclude_none=True)
             logger.debug(json_payload)
-            await self.post('/api/v1/Observations/', json=json_payload)
+            await self.post('/Observations/', json=json_payload)

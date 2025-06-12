@@ -39,7 +39,7 @@ class InteroperabilitySchema:
                 "numericValue": 22.53,
                 "unit": "qudt:DEG_C"
             }
-        }
+    }
 
     collection_schema = {
         '@id': "",
@@ -162,7 +162,7 @@ class InteroperabilitySchema:
                         "unit": property_schema[p.measurement_type]["unit"]
                     }
 
-                collection_schema["hasMember"].append(item_schema)
+                    collection_schema["hasMember"].append(item_schema)
                 semantic_data['@graph'].append(collection_schema)
         except Exception as e: # pylint: disable=W0718:broad-exception-caught
             logger.exception(e)
