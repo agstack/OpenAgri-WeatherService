@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class FarmCalendarServiceClient(MicroserviceClient):
 
     def __init__(self, app: FastAPI):
-        super().__init__(base_url=config.FARM_CALENDAR_URL, service_name="Farm Calendar", app=app)
+        super().__init__(base_url=config.GATEKEEPER_FARM_CALENDAR_API, service_name="Farm Calendar", app=app)
 
     @backoff.on_exception(
         backoff.expo,
