@@ -1,5 +1,7 @@
 # Weather Service
 
+🇪🇺 *This service was created in the context of OpenAgri project (https://horizon-openagri.eu/). OpenAgri has received funding from the EU’s Horizon Europe research and innovation programme under Grant Agreement no. 101134083.*
+
 ## Description
 Fast, reliable weather API providing 5-day forecasts, agricultural indicators like
 [Temperature-Humidity Index](https://www.pericoli.com/en/temperature-humidity-index-what-you-need-to-know-about-it/),
