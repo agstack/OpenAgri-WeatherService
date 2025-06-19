@@ -82,7 +82,7 @@ Returns current weather conditions for a specific location in standard JSON form
 Get a complete list of the OpenApi specification compatible with [OCSM](OCSM.md) and [JSON](API.md)
 
 ## Swagger Live Docs
-Use the [Online Swagger Editor](https://editor-next.swagger.io/?url=https://raw.githubusercontent.com/agstack/weather-service/refs/heads/doc/document-api/openapi.yml) to visualise the current API specification and documentation.
+Use the [Online Swagger Editor](https://editor-next.swagger.io/?url=[https://raw.githubusercontent.com/agstack/weather-service/refs/heads/doc/document-api/openapi.yml](https://raw.githubusercontent.com/agstack/openagri-weather-service/refs/heads/main/openapi.yml)) to visualise the current API specification and documentation.
 
 ## Contribute
 
