@@ -1,6 +1,6 @@
 FROM python:3.12 AS builder
 
-LABEL org.opencontainers.image.source https://github.com/openagri-eu/weather-service
+LABEL org.opencontainers.image.source https://github.com/agstack/weather-service
 
 ARG DEBIAN_FRONTEND=noninteractive
 
