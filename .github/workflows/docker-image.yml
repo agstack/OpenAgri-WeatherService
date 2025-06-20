@@ -36,6 +36,10 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set lowercase repository name
+        run: |
+          echo "REPO_LOWER=${GITHUB_REPOSITORY,,}" >> GITHUB_ENV
+
       - name: Build and push Docker image
         id: docker_build
         uses: docker/build-push-action@v6
@@ -43,7 +47,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ghcr.io/${{ env.REPO_LOWER }}:${{ github.ref_name }}
             ${{ github.ref_name == 'main' && format('ghcr.io/{0}:latest', github.repository) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
