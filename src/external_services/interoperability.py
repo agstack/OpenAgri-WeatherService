@@ -155,7 +155,8 @@ class InteroperabilitySchema:
                 collection_schema["hasFeatureOfInterest"]["long"] = spatial_entity.location.coordinates[1]
 
                 for p in preds:
-                    item_prefix = f"weather:forecast:{property_schema[p.measurement_type]["measurement"].lower()}"
+                    measurement_name = property_schema[p.measurement_type]["measurement"].lower()
+                    item_prefix = f"weather:forecast:{measurement_name}"
                     item_schema = utils.deepcopy_dict(cls.item_schema)
                     item_schema["@id"] = utils.generate_uuid(item_prefix, p.id)
                     item_schema["observedProperty"] = f"cf:{p.measurement_type}"

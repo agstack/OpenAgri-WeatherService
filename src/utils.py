@@ -116,7 +116,9 @@ def load_class(classpath):
 def load_classes(pathname, base_classes):
     classes = []
     for path in glob.glob(pathname, recursive=True):
-        module = import_module(os.path.splitext(path)[0].strip('./').replace('/', '.'))
+        # Handle both Windows and Unix path separators
+        module_path = os.path.splitext(path)[0].strip('./').replace('/', '.').replace('\\', '.')
+        module = import_module(module_path)
         for _, obj in inspect.getmembers(module):
             if inspect.isclass(obj) and obj not in base_classes and issubclass(obj, base_classes):
                 classes.append(obj)
