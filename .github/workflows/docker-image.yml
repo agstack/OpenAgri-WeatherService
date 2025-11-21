@@ -46,6 +46,7 @@ jobs:
         with:
           context: .
           file: Dockerfile.x86_64
+          build-args: SOURCE_REPO=https://github.com/${{ github.repository }}
           platforms: linux/amd64
           push: true
           tags: |
@@ -98,7 +99,7 @@ jobs:
         with:
           context: .
           file: Dockerfile.arm64
-          build-args: BUILDKIT_PROGRESS=plain
+          build-args: BUILDKIT_PROGRESS=plain,SOURCE_REPO=https://github.com/${{ github.repository }}
           platforms: linux/arm64
           push: true
           tags: |
