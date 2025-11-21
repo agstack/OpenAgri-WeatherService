@@ -3,6 +3,8 @@
 [![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL%201.2-blue.svg)](./LICENSE)
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
 ![Docker](https://img.shields.io/badge/docker-ready-brightgreen)
+[![Last commit](https://img.shields.io/github/last-commit/farmOS/farmOS.svg?style=flat)](https://github.com/agstack/openagri-weatherservice/commits)
+
 
 Fast, reliable weather API with 5-day forecasts, agricultural indicators, UAV flight condition predictions, and spray condition forecasts.  
 Built with [FastAPI](https://fastapi.tiangolo.com/) for high performance and easy integration.
@@ -259,14 +261,13 @@ You can also open an issue to discuss ideas.
 
 Weather Service is part of OpenAgri project, building tools for agriculture & climate data. Your contribution helps farmers and researchers.
 
+This project exists thanks to all the people who contribute.
+
+<a href="https://github.com/agstack/OpenAgri-WeatherService/graphs/contributors">
+<img src="https://avatars.githubusercontent.com/u/1727181?v=4&s=80" width="60px;" alt="@fedjo's Avatar"/><img src="https://avatars.githubusercontent.com/u/369058?v=4&s=80" width="60px;" alt="@arruda's Avatar"/><img src="https://avatars.githubusercontent.com/u/58622550?v=4&s=80" width="60px;" alt="@GuND0Wn151's Avatar"/><img src="https://avatars.githubusercontent.com/u/159937181?v=4&s=80" width="60px;" alt="@Vidushi2709's Avatar"/></a>
+
 ## License
 
 This project is licensed under the European Union Public Licence (EUPL) v1.2.
 See the [European Union Public Licence](LICENSE) file for details.
-
-
-
-
-
-
 
