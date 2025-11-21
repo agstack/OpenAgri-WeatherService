@@ -58,10 +58,9 @@ jobs:
   # ARM64 Build (manual / self-hosted)
   # -------------------------
   build-arm64:
-    if: ${{ github.event_name == 'workflow_dispatch' }} # manual trigger only
+    #if: ${{ github.event_name == 'workflow_dispatch' }} # manual trigger only
     # runs-on: [self-hosted, arm64]                      # use if you have an ARM64 runner
     runs-on: ubuntu-latest
-    needs: build-amd64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -112,7 +111,7 @@ jobs:
   # Create multi-arch manifest
   # -------------------------
   manifest:
-    if: ${{ github.event_name == 'workflow_dispatch' }} # only when both images are built
+    # if: ${{ github.event_name == 'workflow_dispatch' }} # only when both images are built
     needs: [ build-amd64, build-arm64 ]
     runs-on: ubuntu-latest
     steps:
