@@ -1,0 +1,56 @@
+version: '3'
+
+
+services:
+  app:
+    image: ghcr.io/${DOCKER_REGISTRY}/openagri-weatherservice:${TAG}
+    build:
+      context: .
+      dockerfile: Dockerfile.arm64
+      # Pass the build argument from your environment
+      args:
+        SOURCE_REPO: ${SOURCE_REPO}
+    depends_on:
+      - mongodb
+    ports:
+      - "${WEATHER_SRV_PORT}:${WEATHER_SRV_PORT}"
+    environment:
+      # Generic environment vars
+      LOGGING_LEVEL: ${LOGGING_LEVEL:-INFO}
+      JWT_KEY: ${JWT_SIGNING_KEY}
+      ALGORITHM: ${JWT_ALG:-HS256}
+      CRYPT_CONTEXT_SCHEME: ${JWT_CRYPT_CONTEXT_SCHEME:-bcrypt}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRATION_TIME:-240}
+      # Service specific vars
+      WEATHER_SRV_PORT: ${WEATHER_SRV_PORT:-8000}
+      WEATHER_SRV_HOSTNAME: ${WEATHER_SRV_HOSTNAME:-weathersrv}
+      WEATHER_SRV_DATABASE_URI: ${WEATHER_SRV_DATABASE_URI}
+      WEATHER_SRV_DATABASE_NAME: ${WEATHER_SRV_DATABASE_NAME}
+      EXTRA_ALLOWED_HOSTS: ${WEATHER_SRV_EXTRA_ALLOWED_HOSTS}
+      WEATHER_SRV_OPENWEATHERMAP_API_KEY: ${WEATHER_SRV_OPENWEATHERMAP_API_KEY}
+      # If the below value is set then weather service will try to integrate with Gatekeeper
+      GATEKEEPER_URL: ${INTERNAL_GK_URL}
+      WEATHER_SRV_GATEKEEPER_USER: ${GATEKEEPER_SUPERUSER_USERNAME}
+      WEATHER_SRV_GATEKEEPER_PASSWORD: ${GATEKEEPER_SUPERUSER_PASSWORD}
+      # FARM CALENDAR
+      PUSH_THI_TO_FARMCALENDAR: ${PUSH_THI_TO_FARMCALENDAR}
+      GATEKEEPER_FARM_CALENDAR_API: ${GATEKEEPER_FARM_CALENDAR_API}
+      INTERVAL_THI_TO_FARMCALENDAR: ${INTERVAL_THI_TO_FARMCALENDAR}
+    volumes:
+      - ./data:/data:rw
+
+  mongodb:
+    image: arm64v8/mongo:4.4.18
+    command: mongod
+    ports:
+      - '24252:24252'
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${WEATHER_SRV_MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${WEATHER_SRV_MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${WEATHER_SRV_MONGO_INITDB_DATABASE}
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

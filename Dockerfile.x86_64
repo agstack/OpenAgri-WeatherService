@@ -1,6 +1,9 @@
+# Define the Build Argument
+ARG SOURCE_REPO=https://github.com/openagri-eu/openagri-weatherservice
+
 FROM python:3.12 AS builder
 
-LABEL org.opencontainers.image.source https://github.com/agstack/weather-service
+LABEL org.opencontainers.image.source=${SOURCE_REPO}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -43,4 +46,5 @@ ENV USER_ID=$USER_ID \
     PROJECT_DIR=/weather-service \
     PYTHONPATH=/weather-service
 
-CMD ["./run.sh", "prod"]
+ENTRYPOINT ["./run.sh"]
+CMD ["prod"]

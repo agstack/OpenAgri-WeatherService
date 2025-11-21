@@ -7,7 +7,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 run_uvicorn() {
     set -x
     # Uvicorn (ASGI)
-    uvicorn --host 0.0.0.0 --port $WEATHER_SRV_PORT  'src.main:create_app'
+    exec uvicorn --host 0.0.0.0 --port $WEATHER_SRV_PORT  'src.main:create_app'
 }
 
 unittest() {

@@ -1,12 +1,12 @@
+import logging
 import asyncio
 import json
 import re
 import time
 from typing import Optional, Tuple
 from uuid import uuid4
-from fastapi import FastAPI, HTTPException
-import logging
 
+from fastapi import FastAPI, HTTPException
 import backoff
 
 from src.core import config
@@ -31,13 +31,14 @@ class FarmCalendarServiceClient(MicroserviceClient):
         on_backoff=lambda details: asyncio.create_task(details['args'][0].app.setup_authentication_tokens()),
         max_tries=3
     )
-    async def fetch_or_create_activity_type(self, activity_type: str, description: str) -> str:
+    async def fetch_or_create_activity_type(self, activity_type: str, description: str, category="observation") -> str:
         act_jsonld = await self.get(f'/FarmCalendarActivityTypes/?name={activity_type}')
 
         if not self._get_activity_type_id(act_jsonld):
             json_payload = {
                 "name": activity_type,
                 "description": description,
+                "category": category
             }
             act_jsonld = await self.post('/FarmCalendarActivityTypes/', json=json_payload)
 
@@ -49,6 +50,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
             'THI_Observation',
             'Activity type collecting observed values for Temperature Humidity Index'
         )
+        return self.thi_activity_type
 
     # Create Flight Forecast Observation Activity Type
     async def fetch_or_create_flight_forecast_activity_type(self) -> str:
@@ -56,6 +58,7 @@ class FarmCalendarServiceClient(MicroserviceClient):
             'Flight_Forecast_Observation',
             'Activity type collecting observed values for UAV Flight Forecast'
         )
+        return self.ff_activity_type
 
     # Create spray conditions forecast Observation Activity Type
     async def fetch_or_create_spray_forecast_activity_type(self) -> str:
@@ -63,12 +66,10 @@ class FarmCalendarServiceClient(MicroserviceClient):
             'Spray_Forecast_Observation',
             'Activity type collectins observed values for spray conditions forecast'
         )
+        return self.sp_activity_type
 
-    def _get_activity_type_id(self, jsonld: dict) -> Optional[str]:
-        if jsonld['@graph']:
-            return jsonld["@graph"][0]["@id"]
-        return
-
+    def _get_activity_type_id(self, jsonld: dict) -> str:
+        return jsonld["@graph"][0]["@id"]
 
     # Fetch locations from FARM_CALENDAR_URI
     @backoff.on_exception(
