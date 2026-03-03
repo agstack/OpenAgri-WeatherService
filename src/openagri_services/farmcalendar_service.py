@@ -103,7 +103,11 @@ class FarmCalendarServiceClient(MicroserviceClient):
                     if farm_graph:
                         farm_name = farm_graph[0].get("name", "Unknown Farm")
                 except Exception as e:
+                     # Re-raise auth/HTTP-related exceptions so backoff can handle retries/token refresh.
+                    if isinstance(e, (HTTPException, RefreshJWTTokenError)):
+                        raise
                     logger.warning(f"Could not fetch farm name for {farm_id}: {e}")
+
             
             if lat is not None and lon is not None:
                 locations.append({

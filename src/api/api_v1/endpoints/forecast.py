@@ -62,12 +62,15 @@ async def get_hourly_forecast(
     * Data comes from the Open-Meteo Forecast API (no API key required).
     """
     client = WeatherClientFactory.get_provider()
-    results = await client.get_hourly_forecast(lat, lon, days=days)
-    if not results:
+    try:
+        results = await client.get_hourly_forecast(lat, lon, days=days)
+    except Exception as e:
+        logger.error(f"Error fetching hourly forecast from Open-Meteo: {e}")
         raise HTTPException(
             status_code=502,
             detail="Could not retrieve hourly forecast from Open-Meteo",
-        )
+        ) from e
+
     return HourlyResponse(
         location={"lat": lat, "lon": lon},
         data=results,
@@ -104,12 +107,14 @@ async def get_hourly_spray_forecast(
     caller always gets a complete day timeline.
     """
     client = WeatherClientFactory.get_provider()
-    hourly_data = await client.get_hourly_forecast(lat, lon, days=days)
-    if not hourly_data:
+    try:
+        hourly_data = await client.get_hourly_forecast(lat, lon, days=days)
+    except Exception as e:
+        logger.error(f"Error fetching hourly forecast from Open-Meteo: {e}")
         raise HTTPException(
             status_code=502,
             detail="Could not retrieve hourly forecast from Open-Meteo",
-        )
+        ) from e
 
     location = GeoJSONOut(**{"type": "Point", "coordinates": [lat, lon]})
 
@@ -121,17 +126,27 @@ async def get_hourly_spray_forecast(
         wind_ms = v.get("wind_speed_10m")
         precipitation = v.get("precipitation", 0.0) or 0.0
 
-        # Skip if essential values are missing
+        # Instead of skipping the hour entirely if one variable is missing, we could
+        # choose to evaluate spray conditions with the available data and mark the missing
+        # variables in the detailed status.
         if temp is None or humidity is None or wind_ms is None:
-            continue
+            logger.warning(f"Missing essential weather data for hour {obs.timestamp}: temp={temp}, humidity={humidity}, wind_ms={wind_ms}")
+            spray_condition = "unknown"
+            status_details = {
+                "temperature": temp if temp is not None else "missing",
+                "humidity": humidity if humidity is not None else "missing",
+                "wind_speed": wind_ms if wind_ms is not None else "missing",
+                "precipitation": precipitation,
+            }
+        else:
 
-        wind_kmh = wind_ms * 3.6  # convert m/s → km/h
-        temp_wet_bulb = utils.calculate_wet_bulb(temp, humidity)
-        delta_t = temp - temp_wet_bulb
+            wind_kmh = wind_ms * 3.6  # convert m/s → km/h
+            temp_wet_bulb = utils.calculate_wet_bulb(temp, humidity)
+            delta_t = temp - temp_wet_bulb
 
-        spray_condition, status_details = utils.evaluate_spray_conditions(
-            temp, wind_kmh, precipitation, humidity, delta_t,
-        )
+            spray_condition, status_details = utils.evaluate_spray_conditions(
+                temp, wind_kmh, precipitation, humidity, delta_t,
+            )
 
         # Convert SprayStatus enum values to strings for the dict
         detailed_status_str: Dict[str, str] = {
