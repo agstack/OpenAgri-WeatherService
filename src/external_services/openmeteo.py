@@ -50,23 +50,6 @@ class OpenMeteoClient:
             logger.error(f"HTTP error: {e}")
             raise e
 
-    async def _fetch_data(self, params: dict) -> dict:
-        """Fetch data from Open-Meteo API with error handling."""
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(self.BASE_URL, params=params, timeout=10.0)
-                response.raise_for_status()
-                return response.json()
-        except (httpx.NetworkError, httpx.ConnectError, httpx.TimeoutException) as e:
-            logger.error(f"Internet connection is not available: {e}")
-            raise HTTPException(
-                status_code=503,
-                detail="Internet connection is not available. Please cache data for the specified location"
-            ) from e
-        except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error: {e}")
-            raise e
-
     async def get_hourly_history(self, lat: float, lon: float, start: date, end: date, variables: List[str]) -> List[HourlyObservationOut]:
         params = {
             "latitude": lat,
