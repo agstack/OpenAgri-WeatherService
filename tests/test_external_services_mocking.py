@@ -11,7 +11,6 @@ from httpx import HTTPError
 
 from src.external_services.openmeteo import OpenMeteoClient
 from src.external_services.openweathermap import SourceError
-from tests.fixtures import openweathermap_srv
 
 
 class TestOpenWeatherMapApi:

@@ -1,7 +1,6 @@
 import pytest
 
 from src.utils import calculate_thi
-from tests.fixtures import *
 
 
 class TestUtils:

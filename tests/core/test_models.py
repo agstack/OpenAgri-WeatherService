@@ -4,7 +4,6 @@ from pydantic import ValidationError
 from src.models.point import Point
 from src.models.prediction import Prediction
 from src.models.weather_data import WeatherData
-from tests.fixtures import *
 
 
 class TestModels:

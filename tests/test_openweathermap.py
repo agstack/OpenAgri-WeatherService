@@ -6,7 +6,6 @@ import pytest
 from src.external_services import openweathermap
 from src.models.point import Point
 from src.models.prediction import Prediction
-from tests.fixtures import openweathermap_srv
 
 
 class TestOpenWeatherMap:
