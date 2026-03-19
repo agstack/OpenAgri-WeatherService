@@ -59,7 +59,13 @@ async def app(openweathermap_srv):
 
 
 @pytest.fixture
-def test_jwt_token():
+async def async_client(app):
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture
+def jwt_token():
     """Generate a valid JWT token for testing."""
     payload = {
         "sub": "test_user",
@@ -68,13 +74,6 @@ def test_jwt_token():
     }
     token = jwt.encode(payload, config.KEY, algorithm=config.ALGORITHM)
     return token
-
-
-@pytest.fixture
-async def async_client(app):
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        yield ac
-
 
 @pytest.fixture
 def mock_uav(app):
