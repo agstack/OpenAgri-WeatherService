@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from src.external_services import openweathermap
-from src.models.point import Point
 from src.models.prediction import Prediction
+from src.models.point import Point
 
 
 class TestOpenWeatherMap:
@@ -54,3 +54,33 @@ class TestOpenWeatherMap:
         lat, lon = (42.424242, 24.242424)
         with pytest.raises(Exception):
             await openweathermap_srv.get_weather_forecast5days_ld(lat, lon)
+    
+    @pytest.mark.anyio
+    async def test_get_thi_ocm_set_to_false_saves_and_returns_weather_data(
+        self,
+        openweathermap_srv,
+    ):
+        mock_weather_data = MagicMock()
+        openweathermap_srv.save_weather_data_thi = AsyncMock(return_value=mock_weather_data)
+
+        result = await openweathermap_srv.get_thi(40.7128, -74.0060, ocsm=False)
+
+        openweathermap_srv.save_weather_data_thi.assert_called_once_with(40.7128, -74.0060)
+        assert result == mock_weather_data
+    
+    @pytest.mark.anyio
+    async def test_get_thi_ocm_set_to_true_saves_and_returns_weather_data_jsonld(
+        self,
+        openweathermap_srv,
+    ):
+        mock_weather_data = MagicMock()
+        openweathermap_srv.save_weather_data_thi = AsyncMock(return_value=mock_weather_data)
+        mock = MagicMock(return_value={"@context": {}})
+        openweathermap.InteroperabilitySchema.weather_data_to_jsonld = mock
+        result = await openweathermap_srv.get_thi(40.7128, -74.0060, ocsm=True)
+
+        openweathermap.InteroperabilitySchema.weather_data_to_jsonld.assert_called_once_with(mock_weather_data)
+        assert result == {"@context": {}}
+
+    
+
