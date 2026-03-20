@@ -57,33 +57,6 @@ class TestOpenWeatherMapApi:
             },
         }
 
-    @pytest.fixture
-    def mock_owm_current_weather_response(self):
-        return {
-            "coord": {"lon": -74.0060, "lat": 40.7128},
-            "weather": [
-                {"id": 800, "main": "Clear", "description": "clear sky", "icon": "01d"}
-            ],
-            "main": {
-                "temp": 25.5,
-                "feels_like": 26.2,
-                "temp_min": 23.0,
-                "temp_max": 28.0,
-                "pressure": 1013,
-                "humidity": 60,
-                "sea_level": 1013,
-                "grnd_level": 1010,
-            },
-            "wind": {"speed": 5.2, "deg": 180, "gust": 7.8},
-            "clouds": {"all": 0},
-            "dt": 1640995200,
-            "sys": {"country": "US"},
-            "timezone": -18000,
-            "id": 5128581,
-            "name": "New York",
-            "cod": 200,
-        }
-
     @pytest.mark.anyio
     async def test_get_weather_forecast5days_successful_api_response(
         self, openweathermap_srv, mock_owm_5day_forecast_response

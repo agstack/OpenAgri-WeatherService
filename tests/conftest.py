@@ -87,23 +87,40 @@ def mock_uav(app):
     )
 
 
+
+
 @pytest.fixture
-def mock_weather_data(app):
-    now = datetime.utcnow()
+def mock_owm_current_weather_response():
+    """
+    Moved here from TestOpenWeatherMapApi so that it can be shared
+    """
     return {
-        "cod": "200",
-        "list": [
-            {
-                "dt_txt": (now + timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S"),
-                "main": {"temp": 10, "feels_like": 8},
-                "wind": {"speed": 5},
-                "pop": 0.1,
-                "weather": [{"description": "clear sky"}],
-            }
+        "coord": {"lon": -74.0060, "lat": 40.7128},
+        "weather": [
+            {"id": 800, "main": "Clear", "description": "clear sky", "icon": "01d"}
         ],
+        "main": {
+            "temp": 25.5,
+            "feels_like": 26.2,
+            "temp_min": 23.0,
+            "temp_max": 28.0,
+            "pressure": 1013,
+            "humidity": 60,
+            "sea_level": 1013,
+            "grnd_level": 1010,
+        },
+        "wind": {"speed": 5.2, "deg": 180, "gust": 7.8},
+        "clouds": {"all": 0},
+        "dt": 1640995200,
+        "sys": {"country": "US"},
+        "timezone": -18000,
+        "id": 5128581,
+        "name": "New York",
+        "cod": 200,
     }
 
 
+# not used anywhere
 @pytest.fixture
 def mock_flight_response():
     """Mock flight forecast response"""
