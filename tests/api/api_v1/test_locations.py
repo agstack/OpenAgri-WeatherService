@@ -10,9 +10,6 @@ class TestLocationRoutes:
     Integration tests for /api/v1/locations/ routes.
     Uses the in-memory MongoDB (AsyncMongoMockClient) via the app fixture.
     Data is inserted directly into the mock DB before each test that needs it.
-
-    NOTE: exists-in-radius is skipped — it relies on MongoDB $near geospatial
-    queries which are not supported by mongomock.
     """
 
     # Runs after every test to keep the DB clean.
@@ -23,7 +20,7 @@ class TestLocationRoutes:
 
     # Inserts a real CachedLocation document into the mock DB.
     # Returns the inserted document so tests can reference its id.
-    async def _insert_location(self, name="Test Location", location=dict):
+    async def _insert_location(self, location:dict, name: str = "Test Location"):
         doc = CachedLocation(name=name, location=location)
         await doc.insert()
         return doc
@@ -42,8 +39,8 @@ class TestLocationRoutes:
     async def test_list_locations_returns_inserted_documents(
         self, async_client, auth_headers, mock_location
     ):
-        await self._insert_location("Location A", location=mock_location)
-        await self._insert_location("Location B", location=mock_location)
+        await self._insert_location(mock_location, "Location A")
+        await self._insert_location(mock_location, "Location B")
 
         response = await async_client.get(
             "/api/v1/locations/locations/", headers=auth_headers
@@ -64,7 +61,7 @@ class TestLocationRoutes:
     async def test_get_location_by_coordinates_returns_200(
         self, async_client, auth_headers, mock_location
     ):
-        await self._insert_location(location=mock_location)
+        await self._insert_location(mock_location)
 
         response = await async_client.get(
             "/api/v1/locations/locations/by-coordinates/",
@@ -136,7 +133,7 @@ class TestLocationRoutes:
     async def test_add_locations_skips_existing_location(
         self, async_client, auth_headers, mock_location
     ):
-        await self._insert_location("Farm A", location=mock_location)
+        await self._insert_location(mock_location, "Farm A")
 
         payload = {
             "locations": [{"name": "Farm A", "lat": MOCK_LAT, "lon": MOCK_LON}]
@@ -176,7 +173,7 @@ class TestLocationRoutes:
     async def test_delete_location_returns_200(
         self, async_client, auth_headers, mock_location
     ):
-        doc = await self._insert_location(location=mock_location)
+        doc = await self._insert_location(mock_location)
 
         with patch(
             "src.api.api_v1.endpoints.locations.scheduler"
