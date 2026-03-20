@@ -14,6 +14,7 @@ from mongomock_motor import AsyncMongoMockClient
 
 import src.utils as utils
 from src.api.api import data_router
+from src.api.api_v1.api import api_router
 from src.core import config
 from src.core.dao import Dao
 from src.external_services.openweathermap import OpenWeatherMap
@@ -43,6 +44,7 @@ async def openweathermap_srv():
 async def app(openweathermap_srv):
     _app = create_app()
     _app.include_router(data_router)
+    _app.include_router(api_router, prefix="/api/v1")
 
     # Mock the MongoDB client
     mongodb_client = AsyncMongoMockClient()
@@ -74,6 +76,10 @@ def jwt_token():
     }
     token = jwt.encode(payload, config.KEY, algorithm=config.ALGORITHM)
     return token
+
+@pytest.fixture
+def auth_headers(jwt_token):
+    return {"Authorization": f"Bearer {jwt_token}"}
 
 @pytest.fixture
 def mock_uav(app):
@@ -119,8 +125,11 @@ def mock_owm_current_weather_response():
         "cod": 200,
     }
 
+@pytest.fixture
+def mock_location():
+    return {"type": "Point", "coordinates": [-74.0060, 40.7128]}
 
-# not used anywhere
+
 @pytest.fixture
 def mock_flight_response():
     """Mock flight forecast response"""

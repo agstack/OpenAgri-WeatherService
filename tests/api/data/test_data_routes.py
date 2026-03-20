@@ -6,19 +6,7 @@ from fastapi import HTTPException
 
 BASE_PARAMS = {"lat": 40.7128, "lon": -74.0060}
 
-MOCK_LOCATION = {
-    "type": "Point",
-    "coordinates": [40.7128, -74.0060]
-}
-
-MOCK_SPATIAL_ENTITY = {
-    "location": MOCK_LOCATION
-}
-
 class TestDataRoutes:
-    @pytest.fixture
-    def auth_headers(self, jwt_token):
-        return {"Authorization": f"Bearer {jwt_token}"}
 
     @pytest.fixture
     def mock_weather_data_out(self):
@@ -38,10 +26,10 @@ class TestDataRoutes:
             }
     }
     @pytest.fixture
-    def mock_thi_data_out(self):
+    def mock_thi_data_out(self, mock_location):
         return {
             "id": str(uuid.uuid4()),
-            "spatial_entity": MOCK_SPATIAL_ENTITY,
+            "spatial_entity": {"location": mock_location},
             "thi": 72.5
         }
     @pytest.fixture
@@ -69,7 +57,6 @@ class TestDataRoutes:
         response = await async_client.get(
             "/api/data/forecast5/", params=BASE_PARAMS, headers=auth_headers
         )
-
         assert response.status_code == 200
         openweathermap_srv.get_weather_forecast5days.assert_called_once_with(
             BASE_PARAMS["lat"], BASE_PARAMS["lon"]
