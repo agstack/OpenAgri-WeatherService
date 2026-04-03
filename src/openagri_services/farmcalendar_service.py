@@ -69,7 +69,8 @@ class FarmCalendarServiceClient(MicroserviceClient):
         return self.sp_activity_type
 
     def _get_activity_type_id(self, jsonld: dict) -> str:
-        return jsonld["@graph"][0]["@id"]
+        graph = jsonld.get("@graph", [{}])
+        return graph[0].get("@id", "") if graph else ""
 
     # Fetch locations from FARM_CALENDAR_URI
     @backoff.on_exception(
@@ -85,15 +86,48 @@ class FarmCalendarServiceClient(MicroserviceClient):
         for parcel in response.get("@graph", []):
             lat = parcel.get("location", {}).get("lat")
             lon = parcel.get("location", {}).get("long")
+            identifier = parcel.get("identifier", "Unknown")
+
+            # Extract farm name from farm URN reference
+            farm_ref = parcel.get("farm", {})
+            farm_id = farm_ref.get("@id", "")
+
+            # Fetch farm details to get the farm name
+            farm_name = "Unknown Farm"
+            if farm_id:
+                try:
+                    # Extract UUID from URN (format: urn:farmcalendar:Farm:uuid)
+                    farm_uuid = farm_id.split(":")[-1] if ":" in farm_id else farm_id
+                    farm_response = await self.get(f'/Farm/{farm_uuid}/')
+                    farm_graph = farm_response.get("@graph", [{}])
+                    if farm_graph:
+                        farm_name = farm_graph[0].get("name", "Unknown Farm")
+                except Exception as e:
+                     # Re-raise auth/HTTP-related exceptions so backoff can handle retries/token refresh.
+                    if isinstance(e, (HTTPException, RefreshJWTTokenError)):
+                        raise
+                    logger.warning(f"Could not fetch farm name for {farm_id}: {e}")
+
+            
             if lat is not None and lon is not None:
-                locations.append((lat, lon))
+                locations.append({
+                    "lat": lat,
+                    "lon": lon,
+                    "identifier": identifier,
+                    "farm_name": farm_name
+                })
             else:
                 # Fallback: Extract first lat, lon from WKT polygon
                 wkt = parcel.get("hasGeometry", {}).get("asWKT", "")
                 coords = self._parse_wkt(wkt)
                 if coords:
-                    locations.append(coords)
-
+                    locations.append({
+                        "lat": coords[0],
+                        "lon": coords[1],
+                        "identifier": identifier,
+                        "farm_name": farm_name
+                    })
+            logger.debug(f"Processing parcel {identifier} at lat: {lat}, lon: {lon}")
         return locations
 
     # Extract first coordinate pair (lat, lon) from WKT POLYGON
@@ -133,7 +167,11 @@ class FarmCalendarServiceClient(MicroserviceClient):
         on_backoff=lambda details: asyncio.create_task(details['args'][0].app.setup_authentication_tokens()),
         max_tries=3
     )
-    async def send_thi(self, lat, lon):
+    async def send_thi(self, location_info):
+        lat = location_info["lat"]
+        lon = location_info["lon"]
+        farm_name = location_info.get("farm_name", "Unknown Farm")
+        parcel_identifier = location_info.get("identifier", "Unknown")
 
         weather_data = await self.app.weather_app.save_weather_data_thi(lat, lon)
         # Get current unix timestamp
@@ -141,9 +179,12 @@ class FarmCalendarServiceClient(MicroserviceClient):
         timezone = weather_data.data['timezone']
         observation = ObservationSchema(
             activityType=self.thi_activity_type,
-            title=f"THI: {str(round(weather_data.thi, 2))}",
+            title=f"{farm_name}: {parcel_identifier} - THI: {str(round(weather_data.thi, 2))}",
             details=(
-                f"Temperature Humidiy Index on {utils.convert_timestamp_to_string(current_timestamp, timezone)}"
+                f"Temperature Humidity Index on {utils.convert_timestamp_to_string(current_timestamp, timezone)}\n"
+                f"Farm: {farm_name}\n"
+                f"Parcel Identifier: {parcel_identifier}\n"
+                f"Location: lat {lat}, lon {lon}"
             ),
             phenomenonTime=utils.convert_timestamp_to_string(current_timestamp, timezone, iso=True),
             hasResult=QuantityValueSchema(
@@ -165,7 +206,11 @@ class FarmCalendarServiceClient(MicroserviceClient):
         on_backoff=lambda details: asyncio.create_task(details['args'][0].app.setup_authentication_tokens()),
         max_tries=3
     )
-    async def send_flight_forecast(self, lat, lon, uavmodels):
+    async def send_flight_forecast(self, location_info, uavmodels):
+        lat = location_info["lat"]
+        lon = location_info["lon"]
+        farm_name = location_info.get("farm_name", "Unknown Farm")
+        parcel_identifier = location_info.get("identifier", "Unknown")
 
         fly_statuses = await self.app.weather_app.ensure_forecast_for_uavs_and_location(lat, lon, uavmodels, return_existing=False)
         for fly_status in fly_statuses:
@@ -173,10 +218,13 @@ class FarmCalendarServiceClient(MicroserviceClient):
             weather_str = f"Weather params: {json.dumps(fly_status.weather_params)}"
             observation = ObservationSchema(
                 activityType=self.ff_activity_type,
-                title=f"{fly_status.uav_model}: {fly_status.status}",
+                title=f"Farm: {farm_name}, Parcel: {parcel_identifier} - {fly_status.uav_model}: {fly_status.status}",
                 details=(
-                    f"Fligh forecast for {fly_status.uav_model} on "
-                    f"lat: {lat}, lon: {lon} at {phenomenon_time}\n\n{weather_str}"
+                    f"Flight forecast for {fly_status.uav_model} at {phenomenon_time}\n"
+                    f"Farm: {farm_name}\n"
+                    f"Parcel Identifier: {parcel_identifier}\n"
+                    f"Location: lat {lat}, lon {lon}\n\n"
+                    f"{weather_str}"
                 ),
                 phenomenonTime=phenomenon_time,
                 madeBySensor=MadeBySensorSchema(name=fly_status.uav_model),
@@ -199,7 +247,12 @@ class FarmCalendarServiceClient(MicroserviceClient):
         on_backoff=lambda details: asyncio.create_task(details['args'][0].app.setup_authentication_tokens()),
         max_tries=3
     )
-    async def send_spray_forecast(self, lat, lon):
+    async def send_spray_forecast(self, location_info):
+        lat = location_info["lat"]
+        lon = location_info["lon"]
+        farm_name = location_info.get("farm_name", "Unknown Farm")
+        parcel_identifier = location_info.get("identifier", "Unknown")
+        
         spray_forecasts = await self.app.weather_app.ensure_spray_forecast_for_location(lat, lon, return_existing=False)
 
         for sf in spray_forecasts:
@@ -207,10 +260,12 @@ class FarmCalendarServiceClient(MicroserviceClient):
 
             observation = ObservationSchema(
                 activityType=self.sp_activity_type,
-                title=f"Spray: {sf.spray_conditions}",
+                title=f"Farm: {farm_name}, Parcel: {parcel_identifier} - Spray: {sf.spray_conditions}",
                 details=(
-                    f"Spray specific conditions on location: "
-                    f"lat: {lat}, lon: {lon} at {phenomenon_time}\n\n"
+                    f"Spray specific conditions at {phenomenon_time}\n"
+                    f"Farm: {farm_name}\n"
+                    f"Parcel Identifier: {parcel_identifier}\n"
+                    f"Location: lat {lat}, lon {lon}\n\n"
                     f"{json.dumps(sf.detailed_status, indent=2)}"
                 ),
                 phenomenonTime=phenomenon_time,
