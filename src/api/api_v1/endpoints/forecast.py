@@ -174,7 +174,7 @@ async def get_hourly_spray_forecast(
 @router.get(
     "/daily/irrigation/",
     response_model=DailyResponse,
-    summary="Daily weather forecast for smart irrigation (7–16 days)",
+    summary="Daily weather forecast for smart irrigation (1–16 days)",
 )
 async def get_daily_irrigation_forecast(
     lat: float = Query(..., description="Latitude", example=38.25),
