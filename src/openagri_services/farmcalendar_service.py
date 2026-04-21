@@ -3,6 +3,7 @@ import asyncio
 import json
 import re
 import time
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from uuid import uuid4
 
@@ -13,7 +14,7 @@ from src.core import config
 from src import utils
 from src.core.exceptions import RefreshJWTTokenError
 from src.openagri_services.base import MicroserviceClient
-from src.openagri_services.interoperability import MadeBySensorSchema, ObservationSchema, QuantityValueSchema
+from src.openagri_services.interoperability import MadeBySensorSchema, ObservationSchema, QuantityValueSchema, AlertSchema, RelatedObservation
 
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,10 @@ class FarmCalendarServiceClient(MicroserviceClient):
         return self.sp_activity_type
 
     def _get_activity_type_id(self, jsonld: dict) -> str:
+        graph = jsonld.get("@graph", [{}])
+        return graph[0].get("@id", "") if graph else ""
+
+    def _get_graph_id(self, jsonld: dict) -> str:
         graph = jsonld.get("@graph", [{}])
         return graph[0].get("@id", "") if graph else ""
 
@@ -281,3 +286,135 @@ class FarmCalendarServiceClient(MicroserviceClient):
             json_payload = observation.model_dump(by_alias=True, exclude_none=True)
             logger.debug(json_payload)
             await self.post('/Observations/', json=json_payload)
+
+    # Per-severity activity types for THI alerts (color-coded)
+    _THI_ALERT_ACTIVITY_TYPES = {
+        "minor": {
+            "name": "THI_Alert_Minor",
+            "description": "THI heat stress alert — minor level",
+            "background_color": "#D4EDDA",
+            "border_color": "#28A745",
+            "text_color": "#155724",
+        },
+        "moderate": {
+            "name": "THI_Alert_Moderate",
+            "description": "THI heat stress alert — moderate level",
+            "background_color": "#FFF3CD",
+            "border_color": "#FFC107",
+            "text_color": "#856404",
+        },
+        "severe": {
+            "name": "THI_Alert_Severe",
+            "description": "THI heat stress alert — severe level",
+            "background_color": "#FFE0B2",
+            "border_color": "#FB8C00",
+            "text_color": "#7F3300",
+        },
+        "critical": {
+            "name": "THI_Alert_Critical",
+            "description": "THI heat stress alert — critical level",
+            "background_color": "#FFCDD2",
+            "border_color": "#C62828",
+            "text_color": "#7F0000",
+        },
+    }
+
+    # Ensure all four THI alert activity types exist in Farm Calendar, cache severity→id mapping
+    @backoff.on_exception(
+        backoff.expo,
+        (HTTPException, RefreshJWTTokenError),
+        on_backoff=lambda details: asyncio.create_task(details['args'][0].app.setup_authentication_tokens()),
+        max_tries=3
+    )
+    async def fetch_or_create_thi_alert_activity_types(self) -> None:
+        self.thi_alert_activity_type_ids = {}
+        for severity, meta in self._THI_ALERT_ACTIVITY_TYPES.items():
+            act_jsonld = await self.get(f'/FarmCalendarActivityTypes/?name={meta["name"]}')
+            act_id = self._get_activity_type_id(act_jsonld)
+            if not act_id:
+                json_payload = {
+                    "name": meta["name"],
+                    "description": meta["description"],
+                    "category": "alert",
+                    "background_color": meta["background_color"],
+                    "border_color": meta["border_color"],
+                    "text_color": meta["text_color"],
+                }
+                act_jsonld = await self.post('/FarmCalendarActivityTypes/', json=json_payload)
+                act_id = self._get_activity_type_id(act_jsonld)
+            self.thi_alert_activity_type_ids[severity] = act_id
+            logger.debug("THI alert activity type '%s' → %s", meta['name'], act_id)
+
+    # Post a colored Alert to Farm Calendar if THI exceeds the minor threshold
+    @backoff.on_exception(
+        backoff.expo,
+        (HTTPException, RefreshJWTTokenError),
+        on_backoff=lambda details: asyncio.create_task(details['args'][0].app.setup_authentication_tokens()),
+        max_tries=3
+    )
+    async def send_thi_alert(self, location_info):
+        lat = location_info["lat"]
+        lon = location_info["lon"]
+        farm_name = location_info.get("farm_name", "Unknown Farm")
+        parcel_identifier = location_info.get("identifier", "Unknown")
+
+        weather_data = await self.app.weather_app.save_weather_data_thi(lat, lon)
+        severity = utils.classify_thi_severity(weather_data.thi)
+        if severity is None:
+            logger.debug(
+                "THI %s below alert threshold for %s/%s — no alert posted",
+                weather_data.thi, farm_name, parcel_identifier
+            )
+            return
+
+        activity_type_id = self.thi_alert_activity_type_ids.get(severity)
+        if not activity_type_id:
+            logger.warning("No cached activity type id for severity '%s', skipping alert", severity)
+            return
+
+        # Post a linked THI observation first; its @id is required by the Alert serializer
+        current_timestamp = int(time.time())
+        tz_offset = weather_data.data['timezone']
+        thi_rounded = round(weather_data.thi, 2)
+        observation = ObservationSchema(
+            activityType=self.thi_activity_type,
+            title=f"{farm_name}: {parcel_identifier} - THI: {thi_rounded}",
+            details=(
+                f"Temperature Humidity Index on {utils.convert_timestamp_to_string(current_timestamp, tz_offset)}\n"
+                f"Farm: {farm_name}\n"
+                f"Parcel Identifier: {parcel_identifier}\n"
+                f"Location: lat {lat}, lon {lon}"
+            ),
+            phenomenonTime=utils.convert_timestamp_to_string(current_timestamp, tz_offset, iso=True),
+            hasResult=QuantityValueSchema(
+                **{
+                    "@id": f"urn:farmcalendar:QuantityValue:{uuid4()}",
+                    "hasValue": str(thi_rounded)
+                }
+            ),
+            observedProperty="temperature_humidity_index"
+        )
+        obs_response = await self.post('/Observations/', json=observation.model_dump(by_alias=True, exclude_none=True))
+        obs_id = self._get_graph_id(obs_response)
+
+        now = datetime.now(timezone.utc)
+        valid_to = now + timedelta(hours=int(config.INTERVAL_THI_TO_FARMCALENDAR))
+
+        alert = AlertSchema(
+            activityType=activity_type_id,
+            title=f"THI Heat Stress Alert [{severity.upper()}] — {farm_name}: {parcel_identifier} (THI: {thi_rounded})",
+            details=(
+                f"Temperature Humidity Index: {thi_rounded}\n"
+                f"Severity: {severity}\n"
+                f"Farm: {farm_name}\n"
+                f"Parcel Identifier: {parcel_identifier}\n"
+                f"Location: lat {lat}, lon {lon}"
+            ),
+            severity=severity,
+            validFrom=now.isoformat(),
+            validTo=valid_to.isoformat(),
+            relatedObservation=RelatedObservation(**{"@id": obs_id, "@type": "Observation"}),
+        )
+        json_payload = alert.model_dump(by_alias=True, exclude_none=True)
+        logger.debug(json_payload)
+        await self.post('/Alerts/', json=json_payload)

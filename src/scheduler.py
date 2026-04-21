@@ -51,6 +51,17 @@ async def schedule_tasks(app: FastAPI):
                 args=[app, location_info]
             )
             logging.debug(f"Scheduled spray conditions forecast task for farm: {farm}, parcel: {parcel}"    )
+        if config.PUSH_THI_ALERTS_TO_FARMCALENDAR:
+            scheduler.add_job(
+                post_thi_alerts_task,
+                "interval",
+                hours=config.INTERVAL_THI_TO_FARMCALENDAR,
+                next_run_time=datetime.now(timezone.utc),
+                id=f"thi_alerts_task_{lat}_{lon}",
+                replace_existing=True,
+                args=[app, location_info]
+            )
+            logging.debug("Scheduled THI alert task for farm: %s, parcel: %s", farm, parcel)
 
     locations = await CachedLocation.find_all().to_list()
     for loc in locations:
@@ -87,6 +98,13 @@ async def post_spray_forecast(app, location_info):
     logging.debug(f"Posting spray conditions forecast at location: ({farm}, {parcel})")
     await fc_client.send_spray_forecast(location_info)
 
+# Post THI colored alert for a single location (only when THI exceeds threshold)
+async def post_thi_alerts_task(app, location_info):
+    fc_client = app.state.fc_client
+    farm, parcel = location_info["farm_name"], location_info["identifier"]
+    logging.debug("Checking THI alert for %s, %s", farm, parcel)
+    await fc_client.send_thi_alert(location_info)
+
 
 # Fetch locations & update scheduler every 24 hours
 async def refresh_locations_and_schedule(app):
@@ -101,6 +119,9 @@ async def refresh_machines_and_schedule(app):
 
 
 async def start_scheduler(app: FastAPI):
+
+    if config.PUSH_THI_ALERTS_TO_FARMCALENDAR:
+        await app.state.fc_client.fetch_or_create_thi_alert_activity_types()
 
     await schedule_tasks(app)
 

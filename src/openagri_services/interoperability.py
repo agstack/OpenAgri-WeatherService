@@ -22,6 +22,11 @@ class HasAgriParcel(BaseModel):
     id: str = Field(..., alias="@id")
     type: str = Field(default="Parcel", alias="@type")
 
+### RelatedObservation to link an Alert to its source Observation
+class RelatedObservation(BaseModel):
+    id: str = Field(..., alias="@id")
+    type: str = Field(default="Observation", alias="@type")
+
 class ObservationSchema(BaseModel):
     id: Optional[str] = Field(default=None, alias="@id")
     type: str = Field(default="Observation", alias="@type")
@@ -33,3 +38,16 @@ class ObservationSchema(BaseModel):
     hasAgriParcel: Optional[HasAgriParcel] = Field(default=None)
     hasResult: QuantityValueSchema
     observedProperty: str
+
+
+class AlertSchema(BaseModel):
+    id: Optional[str] = Field(default=None, alias="@id")
+    type: str = Field(default="Alert", alias="@type")
+    activityType: Union[str, dict]
+    title: str
+    details: str
+    severity: str
+    validFrom: str
+    validTo: str
+    relatedObservation: RelatedObservation
+    hasAgriParcel: Optional[HasAgriParcel] = Field(default=None)
