@@ -22,6 +22,7 @@ The Weather Service provides:
 - **Forecasts** – 5-day forecasts in JSON and JSON-LD (OCSM) formats  
 - **Current weather conditions** – temperature, humidity, wind, sky conditions  
 - **Agricultural indicators** – Temperature-Humidity Index (THI)  
+- **THI alerts for Farm Calendar** – optional severity-based alerts (`minor`, `moderate`, `severe`, `critical`) linked to THI observations  
 - **UAV flight forecasts** – 5-day predictions for UAV flight conditions (by model, filterable)  
 - **Spray condition forecasts** – support for agricultural spraying planning  
 - **Historical weather API** – daily and hourly values. You can find more info [here](history.md)
@@ -197,10 +198,25 @@ farmers operations, farmers observations, parcels properties and recording of fa
 For the usage examples you can check the implementations in `src/schedular.py`, Which contains various schedules, 
 and appropriate debug messages.
 
+When Farm Calendar integration is enabled, the service can push THI observations, UAV flight forecasts,
+spray forecasts, and THI heat-stress alerts for cached farm parcels. THI alerts are generated only when
+the THI value reaches the configured `minor` threshold or above, and each alert is linked to its source
+THI observation in Farm Calendar.
+
 - `PUSH_THI_TO_FARMCALENDAR` - Boolean value to push data to farm calendar, (default: `True`)
+- `PUSH_THI_ALERTS_TO_FARMCALENDAR` - Boolean value to enable scheduled THI heat-stress alerts in Farm Calendar, (default: disabled)
 - `PUSH_FLIGHT_FORECAST_TO_FARMCALENDAR` - Push or Schedule UAV forcast to calendar, (default: `False`)
 - `PUSH_SPRAY_F_TO_FARMCALENDAR` - Push or Schedule spray forcast to calendar, (default: `False`)
 - `INTERVAL_HOURS_THI_TO_FARMCALENDAR` - Interval in hours between schedules, (default: `8`)
+
+### THI alert thresholds
+
+These variables control the severity band used when `PUSH_THI_ALERTS_TO_FARMCALENDAR` is enabled:
+
+- `THI_THRESHOLD_MINOR` - Minimum THI value that creates an alert (default: `72.0`)
+- `THI_THRESHOLD_MODERATE` - Moderate alert threshold (default: `79.0`)
+- `THI_THRESHOLD_SEVERE` - Severe alert threshold (default: `84.0`)
+- `THI_THRESHOLD_CRITICAL` - Critical alert threshold (default: `89.0`)
 
 ### Testing and Misc
 
@@ -270,4 +286,3 @@ This project exists thanks to all the people who contribute.
 
 This project is licensed under the European Union Public Licence (EUPL) v1.2.
 See the [European Union Public Licence](LICENSE) file for details.
-
