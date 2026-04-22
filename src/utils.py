@@ -11,6 +11,7 @@ import os
 import struct
 import copy
 import uuid
+from typing import Optional
 
 
 from fastapi import APIRouter
@@ -87,6 +88,21 @@ def calculate_thi(temperature: float, relative_humidity: float) -> float:
     relative_humidity = relative_humidity / 100 # Convert to % percentage
     thi = (0.8 * temperature) + (relative_humidity * (temperature - 14.4)) + 46.4
     return round(thi, 2)
+
+
+# Classify a THI value into a severity level using configurable thresholds.
+# Returns None when THI is below the minor threshold (no alert warranted).
+def classify_thi_severity(thi: float) -> Optional[str]:
+    from src.core import config
+    if thi >= config.THI_THRESHOLD_CRITICAL:
+        return "critical"
+    if thi >= config.THI_THRESHOLD_SEVERE:
+        return "severe"
+    if thi >= config.THI_THRESHOLD_MODERATE:
+        return "moderate"
+    if thi >= config.THI_THRESHOLD_MINOR:
+        return "minor"
+    return None
 
 
 def number_to_base32_string(num: float) -> str:

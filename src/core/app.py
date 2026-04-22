@@ -148,7 +148,7 @@ class Application(fastapi.FastAPI):
                 app.state.fc_client = FarmCalendarServiceClient(app)
                 await app.state.fc_client.fetch_and_cache_locations()
                 await app.state.fc_client.fetch_and_cache_uavs()
-                if config.PUSH_THI_TO_FARMCALENDAR:
+                if config.PUSH_THI_TO_FARMCALENDAR or config.PUSH_THI_ALERTS_TO_FARMCALENDAR:
                     await app.state.fc_client.fetch_or_create_thi_activity_type()
                 if config.PUSH_FLIGHT_FORECAST_TO_FARMCALENDAR:
                     await app.state.fc_client.fetch_or_create_flight_forecast_activity_type()
